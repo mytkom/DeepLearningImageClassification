@@ -1,6 +1,8 @@
 import torch
 import torch.nn as nn
 
+from configs import Config
+
 
 class ClassificationLoss(nn.Module):
     def __init__(self, label_smoothing: float = 0.0):
@@ -11,5 +13,5 @@ class ClassificationLoss(nn.Module):
         return self.criterion(outputs, targets)
 
 
-def build_loss(cfg) -> ClassificationLoss:
-    return ClassificationLoss(label_smoothing=cfg.LOSS.LABEL_SMOOTHING)
+def build_loss(cfg: Config) -> ClassificationLoss:
+    return ClassificationLoss(label_smoothing=cfg.training.label_smoothing)

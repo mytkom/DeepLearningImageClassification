@@ -1,33 +1,18 @@
-import argparse
 import json
 import os
 import time
 
 import accelerate
 import torch
-from yacs.config import CfgNode as CN
 
-from config import config_to_str, create_cfg, merge_possible_with_base
+from configs import Config
 from dataset import get_loader
+from engine.base_engine import BaseEngine
 from modeling import build_loss, build_model
-from utils.base_engine import BaseEngine
-
-
-def parse_args():
-    parser = argparse.ArgumentParser(description="Train a classification model")
-    parser.add_argument(
-        "--config",
-        default="configs/default.yaml",
-        type=str,
-        help="Path to the configuration file",
-    )
-    parser.add_argument("--seed", default=42, type=int, help="Seed for reproducibility")
-    parser.add_argument("--opts", nargs=argparse.REMAINDER, default=None)
-    return parser.parse_args()
 
 
 class Engine(BaseEngine):
-    def __init__(self, accelerator: accelerate.Accelerator, cfg: CN):
+    def __init__(self, accelerator: accelerate.Accelerator, cfg: Config):
         super().__init__(accelerator, cfg)
 
         # Setup model, loss, optimizer, and dataloaders
@@ -36,8 +21,8 @@ class Engine(BaseEngine):
 
         optimizer = torch.optim.AdamW(
             model.parameters(),
-            lr=self.cfg.TRAIN.LR * self.accelerator.num_processes,
-            weight_decay=self.cfg.TRAIN.WEIGHT_DECAY,
+            lr=self.cfg.training.lr * self.accelerator.num_processes,
+            weight_decay=self.cfg.training.weight_decay,
         )
 
         with self.accelerator.main_process_first():
@@ -56,7 +41,7 @@ class Engine(BaseEngine):
         self.max_acc = 0
 
         # Resume or not
-        if self.cfg.MODEL.RESUME_CHECKPOINT is not None:
+        if self.cfg.model.resume_path is not None:
             with self.accelerator.main_process_first():
                 self.load_from_checkpoint()
 
@@ -65,7 +50,7 @@ class Engine(BaseEngine):
         Load model and optimizer from checkpoint for resuming training.
         Modify this for custom components if needed.
         """
-        checkpoint = self.cfg.MODEL.RESUME_CHECKPOINT
+        checkpoint = self.cfg.model.resume_path
         if not os.path.exists(checkpoint):
             self.accelerator.print(f"[WARN] Checkpoint {checkpoint} not found. Skipping...")
             return
@@ -82,7 +67,7 @@ class Engine(BaseEngine):
         self.current_epoch = meta_data.get("epoch", 0) + 1
         self.max_acc = meta_data.get("max_acc", 0)
         self.accelerator.print(
-            f"[WARN] Checkpoint loaded from {self.cfg.MODEL.RESUME_CHECKPOINT}, continue training or validate..."
+            f"[WARN] Checkpoint loaded from {self.cfg.model.resume_path}, continue training or validate..."
         )
         del checkpoint
 
@@ -113,7 +98,7 @@ class Engine(BaseEngine):
                 self.optimizer.zero_grad()
 
                 loss = self.accelerator.gather(loss.detach().cpu().clone()).mean()
-                step_loss += loss.item() / self.cfg.TRAIN.ACCUM_ITER
+                step_loss += loss.item() / self.cfg.training.accum_iter
             self.iter_time.update(time.time() - start)
 
             if self.accelerator.is_main_process and self.accelerator.sync_gradients:
@@ -171,13 +156,13 @@ class Engine(BaseEngine):
     def setup_training(self):
         os.makedirs(os.path.join(self.base_dir, "checkpoint"), exist_ok=True)
         self.accelerator.init_trackers(
-            self.accelerator.project_configuration.project_dir, config=config_to_str(cfg)
+            self.accelerator.project_configuration.project_dir, config=self.cfg.to_dict()
         )
 
     def train(self):
         train_progress = self.epoch_progress.add_task(
             "Epoch",
-            total=self.cfg.TRAIN.EPOCHS,
+            total=self.cfg.training.epochs,
             completed=self.current_epoch - 1,
             acc=self.max_acc,
         )
@@ -185,10 +170,10 @@ class Engine(BaseEngine):
             self.print_training_details()
             self.setup_training()
         self.accelerator.wait_for_everyone()
-        for epoch in range(self.current_epoch, self.cfg.TRAIN.EPOCHS + 1):
+        for epoch in range(self.current_epoch, self.cfg.training.epochs + 1):
             self.current_epoch = epoch
             self._train_one_epoch()
-            if epoch % self.cfg.TRAIN.VAL_FREQ == 0:
+            if epoch % self.cfg.training.val_freq == 0:
                 self.accelerator.wait_for_everyone()
                 self.validate()
             self.epoch_progress.update(train_progress, advance=1, acc=self.max_acc)
@@ -197,28 +182,3 @@ class Engine(BaseEngine):
     def reset(self):
         super().reset()
         self.max_acc = 0
-
-
-if __name__ == "__main__":
-    args = parse_args()
-    cfg = create_cfg()
-    if args.config:
-        merge_possible_with_base(cfg, args.config)
-    if args.opts:
-        cfg.merge_from_list(args.opts)
-
-    project_config = accelerate.utils.ProjectConfiguration(
-        project_dir=cfg.PROJECT_DIR,
-        logging_dir=cfg.LOG_DIR,
-    )
-    accelerator = accelerate.Accelerator(
-        log_with=cfg.PROJECT_LOG_WITH,
-        project_config=project_config,
-        gradient_accumulation_steps=cfg.TRAIN.ACCUM_ITER,
-        mixed_precision=cfg.TRAIN.MIXED_PRECISION,
-    )
-    # Set seed for reproducibility
-    accelerate.utils.set_seed(args.seed, device_specific=True)
-    engine = Engine(accelerator, cfg)
-    engine.train()
-    engine.close()

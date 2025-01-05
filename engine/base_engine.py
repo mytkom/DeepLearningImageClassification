@@ -6,6 +6,7 @@ Users can extend this class to add more functionalities.
 import os
 
 import accelerate
+import torch
 from rich.console import Group
 from rich.live import Live
 from rich.progress import (
@@ -17,9 +18,8 @@ from rich.progress import (
     TimeElapsedColumn,
     TimeRemainingColumn,
 )
-from yacs.config import CfgNode as CN
 
-from config import show_config
+from configs import Config, show_config
 from utils.meter import AverageMeter
 
 
@@ -32,18 +32,21 @@ def human_format(num):
 
 
 class BaseEngine:
-    def __init__(self, accelerator: accelerate.Accelerator, cfg: CN):
+    def __init__(
+        self, accelerator: accelerate.Accelerator, cfg: Config, is_training_engine: bool = True
+    ):
         # Setup accelerator for distributed training (or single GPU) automatically
-        self.base_dir = os.path.join(cfg.LOG_DIR, cfg.PROJECT_DIR)
+        self.base_dir = os.path.join(cfg.log_dir, cfg.project_dir)
         self.accelerator = accelerator
 
-        if self.accelerator.is_main_process:
+        if self.accelerator.is_main_process and is_training_engine:
             os.makedirs(self.base_dir, exist_ok=True)
             show_config(cfg)
         self.accelerator.wait_for_everyone()
 
         self.cfg = cfg
         self.device = self.accelerator.device
+        self.dtype = self.get_dtype()
 
         self.sub_task_progress = Progress(
             TextColumn("{task.description}"),
@@ -67,6 +70,14 @@ class BaseEngine:
         # Monitor for the time
         self.iter_time = AverageMeter()
         self.data_time = AverageMeter()
+
+    def get_dtype(self):
+        if self.cfg.mixed_precision == "no":
+            return torch.float32
+        elif self.cfg.mixed_precision == "fp16":
+            return torch.float16
+        elif self.cfg.mixed_precision == "bf16":
+            return torch.bfloat16
 
     def print_dataset_details(self):
         self.accelerator.print(

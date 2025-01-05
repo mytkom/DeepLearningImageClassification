@@ -1,6 +1,8 @@
 import torch
 import torch.nn as nn
 
+from configs import Config
+
 
 class ClassicModel(nn.Module):
     def __init__(self, in_channels: int, base_dim: int, num_classes: int):
@@ -22,5 +24,5 @@ class ClassicModel(nn.Module):
         return x
 
 
-def build_model(cfg) -> ClassicModel:
-    return ClassicModel(cfg.MODEL.IN_CHANNELS, cfg.MODEL.BASE_DIM, cfg.MODEL.NUM_CLASSES)
+def build_model(cfg: Config) -> ClassicModel:
+    return ClassicModel(cfg.model.in_channels, cfg.model.base_dim, cfg.model.num_classes)
