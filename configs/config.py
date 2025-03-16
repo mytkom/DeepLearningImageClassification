@@ -37,6 +37,7 @@ class ModelConfig:
 @dataclasses.dataclass
 class DataConfig:
     root: str = "data"
+    subset_size: Optional[int] = None
 
 
 @dataclasses.dataclass
@@ -55,7 +56,7 @@ class Config(JSONPyWizard):
 
     project_dir: str = "project"
     log_dir: str = "logs"
-    project_tracker: List[str] = dataclasses.field(default_factory=lambda: ["tensorboard"])
+    project_tracker: List[str] = dataclasses.field(default_factory=lambda: ["wandb"])
     mixed_precision: str = "no"
     seed: int = 0
     config: Optional[str] = None

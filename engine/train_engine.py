@@ -139,7 +139,7 @@ class Engine(BaseEngine):
                 {
                     "acc/val": total_acc,
                 },
-                step=(self.current_epoch - 1) * len(self.train_loader),  # Use train steps
+                step=self.current_epoch * len(self.train_loader),  # Use train steps
             )
         if self.accelerator.is_main_process and total_acc > self.max_acc:
             save_path = os.path.join(self.base_dir, "checkpoint")
