@@ -5,6 +5,7 @@ import numpy as np
 import torchvision
 from torch.utils.data import DataLoader, Dataset, Subset
 from torchvision.transforms import transforms
+from torchvision.transforms.autoaugment import AutoAugment
 
 from configs import Config
 
@@ -33,7 +34,7 @@ def get_loader(cfg: Config) -> Tuple[DataLoader, DataLoader]:
             ]
         )
     elif cfg.data.augmentation == "AutoAugment":
-        augmentation = transforms.AutoAugment()
+        augmentation = AutoAugment()
     else:
         augmentation = transforms.Compose([])  # No augmentation
 
@@ -44,7 +45,7 @@ def get_loader(cfg: Config) -> Tuple[DataLoader, DataLoader]:
             transforms.Normalize(mean=CINIC10.cinic_mean, std=CINIC10.cinic_std),
         ]
     )
-    
+
     cinic_train = torchvision.datasets.ImageFolder(
         os.path.join(cfg.data.root, CINIC10.cinic_directory, "train"),
         transform=train_transform,

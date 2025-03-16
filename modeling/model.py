@@ -194,6 +194,7 @@ def ViT3M(in_channels: int, num_classes: int) -> nn.Module:
 
 
 def build_model(cfg: Config) -> nn.Module:
+    print("config just before model creation: ", cfg)
     if cfg.model.architecture == "CNN":
         if cfg.cnn.architecture not in CNN_MAP.keys():
             raise RuntimeError(

@@ -20,7 +20,8 @@ def merge_configs(self_cfg, wandb_cfg):
 
 class SweepEngine(Engine):
     def setup_training(self):
-        super().setup_training()
         self.accelerator.wait_for_everyone()
 
         merge_configs(self.cfg, wandb.config)
+
+        super().setup_training()

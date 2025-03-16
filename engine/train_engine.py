@@ -17,33 +17,14 @@ class Engine(BaseEngine):
     def __init__(self, accelerator: accelerate.Accelerator, cfg: Config):
         super().__init__(accelerator, cfg)
 
-        model = build_model(cfg)
-        self.loss_fn = build_loss(cfg)
-
-        optimizer = torch.optim.AdamW(
-            model.parameters(),
-            lr=self.cfg.training.lr * self.accelerator.num_processes,
-            weight_decay=self.cfg.training.weight_decay,
-        )
-
-        with self.accelerator.main_process_first():
-            train_loader, val_loader = get_loader(cfg)
-
-        (
-            self.model,
-            self.optimizer,
-            self.train_loader,
-            self.val_loader,
-        ) = self.accelerator.prepare(model, optimizer, train_loader, val_loader)
-
         self.min_loss = float("inf")
         self.current_epoch = 1
         self.max_acc = 0
         self.metrics = Metrics(cfg.data.num_classes)
 
-        if self.cfg.model.resume_path is not None:
-            with self.accelerator.main_process_first():
-                self.load_from_checkpoint()
+        self.accelerator.init_trackers(
+            self.accelerator.project_configuration.project_dir, config=self.cfg.to_dict()
+        )
 
     def load_from_checkpoint(self):
         """
@@ -172,9 +153,25 @@ class Engine(BaseEngine):
 
     def setup_training(self):
         os.makedirs(os.path.join(self.base_dir, "checkpoint"), exist_ok=True)
-        self.accelerator.init_trackers(
-            self.accelerator.project_configuration.project_dir, config=self.cfg.to_dict()
+        
+        model = build_model(self.cfg)
+        self.loss_fn = build_loss(self.cfg)
+        optimizer = torch.optim.AdamW(
+            model.parameters(),
+            lr=self.cfg.training.lr * self.accelerator.num_processes,
+            weight_decay=self.cfg.training.weight_decay,
         )
+
+        with self.accelerator.main_process_first():
+            train_loader, val_loader = get_loader(self.cfg)
+
+        (
+            self.model,
+            self.optimizer,
+            self.train_loader,
+            self.val_loader,
+        ) = self.accelerator.prepare(model, optimizer, train_loader, val_loader)
+        
 
     def train(self):
         train_progress = self.epoch_progress.add_task(
