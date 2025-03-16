@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import dataclasses
-from typing import List, Literal, Optional
+from typing import List, Literal, Optional, ClassVar
 
 from dataclass_wizard import JSONPyWizard
 
@@ -25,17 +25,53 @@ class EvalConfig:
     num_workers: int = 4
     batch_size: int = 32
 
+@dataclasses.dataclass
+class ModelArchitectureConfig:
+    TYPE: ClassVar[str] = "None"
+
+@dataclasses.dataclass
+class ClassicCNNArchitectureConfig(ModelArchitectureConfig):
+    TYPE: ClassVar[str] = "ClassicCNN"
+    base_dim: int = 32
+
+@dataclasses.dataclass
+class ResNetCNNArchitectureConfig(ModelArchitectureConfig):
+    TYPE: ClassVar[str] = "ResNetCNN"
+    base_dim: int = 32
+
+@dataclasses.dataclass
+class VGGlikeArchitectureConfig(ModelArchitectureConfig):
+    TYPE: ClassVar[str] = "VGGlike"
+    base_dim: int = 32
+
+@dataclasses.dataclass
+class PretrainedCNNArchitectureConfig(ModelArchitectureConfig):
+    TYPE: ClassVar[str] = "PretrainedCNN"
+    base_pretrained_model: Literal["EfficientNetB0"] = "EfficientNetB0"
+    fine_tuning: bool = False
+    mlp_hidden_dim: int = 32
+
+@dataclasses.dataclass
+class ViT(ModelArchitectureConfig):
+    TYPE: ClassVar[str] = "ViT"
+
+@dataclasses.dataclass
+class PretrainedViTArchitectureConfig(ModelArchitectureConfig):
+    TYPE: ClassVar[str] = "PretrainedViT"
+    base_pretrained_model: Literal["b_16"] = "b_16"
+    fine_tuning: bool = False
+    mlp_hidden_dim: int = 32
 
 @dataclasses.dataclass
 class ModelConfig:
-    in_channels: int = 3
-    base_dim: int = 16
-    num_classes: int = 10
+    model_architecture: ModelArchitectureConfig
     resume_path: Optional[str] = None
 
 
 @dataclasses.dataclass
 class DataConfig:
+    num_classes: int = 10
+    in_channels: int = 3
     root: str = "data"
     subset_size: Optional[int] = None
 
