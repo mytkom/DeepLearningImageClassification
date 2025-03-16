@@ -1,7 +1,9 @@
+import os
 from typing import Tuple
 
+import numpy as np
 import torchvision
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import DataLoader, Dataset, Subset
 from torchvision.transforms import transforms
 
 from configs import Config
@@ -9,18 +11,24 @@ from configs import Config
 
 class CINIC10(Dataset):
     """CINIC10 dataset contants."""
-    cinic_directory = 'data/CINIC-10'
+    cinic_directory = 'CINIC-10'
     cinic_mean = [0.47889522, 0.47227842, 0.43047404]
     cinic_std = [0.24205776, 0.23828046, 0.25874835]
 
 
 def get_loader(cfg: Config) -> Tuple[DataLoader, DataLoader]:
-    cinic_train = torchvision.datasets.ImageFolder(CINIC10.cinic_directory + '/train',
+    cinic_train = torchvision.datasets.ImageFolder(os.path.join(cfg.data.root, CINIC10.cinic_directory, 'train'),
     	transform=transforms.Compose([transforms.ToTensor(),
         transforms.Normalize(mean=CINIC10.cinic_mean,std=CINIC10.cinic_std)]))
-    cinic_valid = torchvision.datasets.ImageFolder(CINIC10.cinic_directory + '/valid',
+    cinic_valid = torchvision.datasets.ImageFolder(os.path.join(cfg.data.root, CINIC10.cinic_directory, 'valid'),
     	transform=transforms.Compose([transforms.ToTensor(),
         transforms.Normalize(mean=CINIC10.cinic_mean,std=CINIC10.cinic_std)]))
+
+    if cfg.data.subset_size:
+        train_indices = np.random.choice(len(cinic_train), cfg.data.subset_size, replace=False)
+        val_indices = np.random.choice(len(cinic_valid), cfg.data.subset_size, replace=False)
+        cinic_train = Subset(cinic_train, train_indices)
+        cinic_valid = Subset(cinic_valid, val_indices)
 
     train_loader = DataLoader(
         cinic_train,

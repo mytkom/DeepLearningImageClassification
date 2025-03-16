@@ -1,5 +1,8 @@
 import accelerate
 import tyro
+import yaml
+
+import wandb
 
 from configs import Config
 from engine import build_engine
@@ -31,6 +34,13 @@ def main():
     engine.train()
     engine.close()
 
-
 if __name__ == "__main__":
-    main()
+
+    with open("configuration/cinic/sweep_config.yaml") as f:
+        sweep_configuration = yaml.safe_load(f)
+
+    sweep_id = wandb.sweep(
+        sweep=sweep_configuration,
+        project="sweep_test",
+    )
+    wandb.agent(sweep_id, function=main)
