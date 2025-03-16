@@ -1,0 +1,60 @@
+{
+  "method": "random",
+  "metric": {
+    "name": "acc/val",
+    "goal": "maximize"
+  },
+  "parameters": {
+    "training": {
+      "parameters": {
+        "lr": {
+          "min": 0.0001,
+          "max": 0.03
+        },
+        "batch_size": {
+          "values": [
+            32,
+            64
+          ]
+        },
+        "weight_decay": {
+          "min": 0.0,
+          "max": 1.0
+        }
+      }
+    },
+    "cnn": {
+      "parameters": {
+        "base_dim": {
+          "values": [
+            16,
+            32,
+            64
+          ]
+        },
+        "batch_normalization": {
+          "values": [
+            true,
+            false
+          ]
+        },
+        "dropout": {
+          "min": 0.0,
+          "max": 1.0
+        }
+      }
+    },
+    "data": {
+      "parameters": {
+        "augmentation": {
+          "values": [
+            null,
+            "BasicTransform",
+            "BasicColors",
+            "AutoAugment"
+          ]
+        }
+      }
+    }
+  }
+}

@@ -25,16 +25,20 @@ class EvalConfig:
     num_workers: int = 4
     batch_size: int = 32
 
+
 @dataclasses.dataclass
 class CNNArchitectureConfig:
     architecture: Literal["Classic", "VGGlike", "ResNet"] = "ResNet"
     base_dim: int = 32
     batch_normalization: bool = False
+    dropout: float = 0.0
+
 
 @dataclasses.dataclass
 class ModelConfig:
     architecture: Literal["CNN"] = "CNN"
     resume_path: Optional[str] = None
+
 
 @dataclasses.dataclass
 class DataConfig:
@@ -43,6 +47,8 @@ class DataConfig:
     image_size: int = 32
     root: str = "data"
     subset_size: Optional[int] = None
+    augmentation: Literal["BasicTransform", "BasicColors", "AutoAugment"] | None = None
+
 
 @dataclasses.dataclass
 class Config(JSONPyWizard):
