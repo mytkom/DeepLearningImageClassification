@@ -37,7 +37,7 @@ class ModelConfig:
 @dataclasses.dataclass
 class DataConfig:
     root: str = "data"
-    subset_size: Optional[int] = 100
+    subset_size: Optional[int] = None
 
 
 @dataclasses.dataclass
