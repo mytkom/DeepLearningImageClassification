@@ -124,6 +124,7 @@ class Engine(BaseEngine):
 
     def validate(self):
         valid_progress = self.sub_task_progress.add_task("validate", total=len(self.val_loader))
+        total_acc = 0
         all_preds = []
         all_labels = []
         all_losses = []

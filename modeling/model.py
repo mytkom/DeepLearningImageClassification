@@ -74,7 +74,7 @@ class ClassicCNN(ConfigurableCNN):
 
 
 class ResNetBlock(nn.Module):
-    def __init__(self, in_channels, out_channels, use_bn=False):
+    def __init__(self, in_channels, out_channels, use_bn=False, dropout=.0):
         super().__init__()
         self.conv1 = nn.Conv2d(
             in_channels, out_channels, kernel_size=3, padding=1, bias=not use_bn
@@ -85,7 +85,7 @@ class ResNetBlock(nn.Module):
         )
         self.bn2 = nn.BatchNorm2d(out_channels) if use_bn else nn.Identity()
         self.relu = nn.ReLU(inplace=True)
-        self.dropout = nn.Dropout2d(self.dropout)
+        self.dropout = nn.Dropout2d(dropout)
         self.shortcut = (
             nn.Conv2d(in_channels, out_channels, kernel_size=1)
             if in_channels != out_channels
@@ -115,13 +115,13 @@ class ResNet(ConfigurableCNN):
         dropout=0.0,
     ):
         super().__init__(input_channels, num_classes, base_filters, use_bn, dropout)
-        self.layer1 = ResNetBlock(input_channels, base_filters, use_bn)
+        self.layer1 = ResNetBlock(input_channels, base_filters, use_bn, dropout=self.dropout)
         self.pool1 = nn.MaxPool2d(2, 2)
-        self.layer2 = ResNetBlock(base_filters, base_filters * 2, use_bn)
+        self.layer2 = ResNetBlock(base_filters, base_filters * 2, use_bn, dropout=self.dropout)
         self.pool2 = nn.MaxPool2d(2, 2)
-        self.layer3 = ResNetBlock(base_filters * 2, base_filters * 4, use_bn)
+        self.layer3 = ResNetBlock(base_filters * 2, base_filters * 4, use_bn, dropout=self.dropout)
         self.pool3 = nn.MaxPool2d(2, 2)
-        self.layer4 = ResNetBlock(base_filters * 4, base_filters * 8, use_bn)
+        self.layer4 = ResNetBlock(base_filters * 4, base_filters * 8, use_bn, dropout=self.dropout)
         self.pool4 = nn.MaxPool2d(2, 2)
         self.fc1 = nn.Linear(
             base_filters * 8 * (image_size // 16) * (image_size // 16), 256

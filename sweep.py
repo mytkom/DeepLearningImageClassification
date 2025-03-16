@@ -40,6 +40,6 @@ if __name__ == "__main__":
 
     sweep_id = wandb.sweep(
         sweep=sweep_configuration,
-        project="sweep_test",
+        project="cnns_sweep",
     )
     wandb.agent(sweep_id, function=sweep, count=1)
