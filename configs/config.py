@@ -26,55 +26,23 @@ class EvalConfig:
     batch_size: int = 32
 
 @dataclasses.dataclass
-class ModelArchitectureConfig:
-    TYPE: ClassVar[str] = "None"
-
-@dataclasses.dataclass
-class ClassicCNNArchitectureConfig(ModelArchitectureConfig):
-    TYPE: ClassVar[str] = "ClassicCNN"
+class CNNArchitectureConfig:
+    architecture: Literal["Classic", "VGGlike", "ResNet"] = "ResNet"
     base_dim: int = 32
-
-@dataclasses.dataclass
-class ResNetCNNArchitectureConfig(ModelArchitectureConfig):
-    TYPE: ClassVar[str] = "ResNetCNN"
-    base_dim: int = 32
-
-@dataclasses.dataclass
-class VGGlikeArchitectureConfig(ModelArchitectureConfig):
-    TYPE: ClassVar[str] = "VGGlike"
-    base_dim: int = 32
-
-@dataclasses.dataclass
-class PretrainedCNNArchitectureConfig(ModelArchitectureConfig):
-    TYPE: ClassVar[str] = "PretrainedCNN"
-    base_pretrained_model: Literal["EfficientNetB0"] = "EfficientNetB0"
-    fine_tuning: bool = False
-    mlp_hidden_dim: int = 32
-
-@dataclasses.dataclass
-class ViT(ModelArchitectureConfig):
-    TYPE: ClassVar[str] = "ViT"
-
-@dataclasses.dataclass
-class PretrainedViTArchitectureConfig(ModelArchitectureConfig):
-    TYPE: ClassVar[str] = "PretrainedViT"
-    base_pretrained_model: Literal["b_16"] = "b_16"
-    fine_tuning: bool = False
-    mlp_hidden_dim: int = 32
+    batch_normalization: bool = False
 
 @dataclasses.dataclass
 class ModelConfig:
-    model_architecture: ModelArchitectureConfig
+    architecture: Literal["CNN"] = "CNN"
     resume_path: Optional[str] = None
-
 
 @dataclasses.dataclass
 class DataConfig:
     num_classes: int = 10
     in_channels: int = 3
+    image_size: int = 32
     root: str = "data"
     subset_size: Optional[int] = None
-
 
 @dataclasses.dataclass
 class Config(JSONPyWizard):
@@ -83,6 +51,7 @@ class Config(JSONPyWizard):
 
     # Config for model option
     model: ModelConfig
+    cnn: CNNArchitectureConfig
 
     # Config for data option
     data: DataConfig
