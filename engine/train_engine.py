@@ -184,8 +184,8 @@ class Engine(BaseEngine):
             acc=self.max_acc,
         )
         if self.accelerator.is_main_process:
-            self.print_training_details()
             self.setup_training()
+            self.print_training_details()
         self.accelerator.wait_for_everyone()
         for epoch in range(self.current_epoch, self.cfg.training.epochs + 1):
             self.current_epoch = epoch

@@ -42,4 +42,4 @@ if __name__ == "__main__":
         sweep=sweep_configuration,
         project="cnns_sweep",
     )
-    wandb.agent(sweep_id, function=sweep, count=1)
+    wandb.agent(sweep_id, function=sweep)
