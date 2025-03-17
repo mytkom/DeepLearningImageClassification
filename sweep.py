@@ -35,11 +35,11 @@ def sweep():
     engine.close()
 
 if __name__ == "__main__":
-    with open("configuration/cnn_sweeps/sweep_config.json") as f:
+    with open("configuration/cnn_sweeps/grid_base_dim_64/sweep_config.json") as f:
         sweep_configuration = yaml.safe_load(f)
 
     sweep_id = wandb.sweep(
         sweep=sweep_configuration,
-        project="cnns_sweep",
+        project="cnns_sweep_3",
     )
     wandb.agent(sweep_id, function=sweep)
