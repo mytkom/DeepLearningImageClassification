@@ -4,15 +4,12 @@
         "label_smoothing": 0.0,
         "batch_size": 128,
         "val_freq": 1,
-        "epochs": 10,
+        "epochs": 30,
         "num_workers": 4,
         "accum_iter": 1,
         "mixed_precision": "fp16",
-        "lr": 0.0003,
+        "lr": 0.001,
         "weight_decay": 0.0
-    },
-    "model": {
-        "architecture": "CNN"
     },
     "cnn": {
         "base_dim": 64,
@@ -26,10 +23,10 @@
         "num_workers": 4,
         "batch_size": 32
     },
-    "project_dir": "project",
+    "project_dir": "data_augmentation",
     "log_dir": "logs",
     "project_tracker": ["wandb"],
     "mixed_precision": "no",
-    "seed": 0,
+    "seed": 42,
     "config": null
 }

@@ -36,7 +36,7 @@ class CNNArchitectureConfig:
 
 @dataclasses.dataclass
 class ModelConfig:
-    architecture: Literal["CNN"] = "CNN"
+    architecture: Literal["CNN", "ViT"] = "CNN"
     resume_path: Optional[str] = None
 
 
