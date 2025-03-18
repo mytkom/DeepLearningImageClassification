@@ -4,46 +4,27 @@ import time
 
 import accelerate
 import torch
+import torch.nn.functional as F
 
 from configs import Config
 from dataset import get_loader
 from engine.base_engine import BaseEngine
 from modeling import build_loss, build_model
+from utils.metrics import Metrics
 
 
 class Engine(BaseEngine):
     def __init__(self, accelerator: accelerate.Accelerator, cfg: Config):
         super().__init__(accelerator, cfg)
 
-        # Setup model, loss, optimizer, and dataloaders
-        model = build_model(cfg)
-        self.loss_fn = build_loss(cfg)
-
-        optimizer = torch.optim.AdamW(
-            model.parameters(),
-            lr=self.cfg.training.lr * self.accelerator.num_processes,
-            weight_decay=self.cfg.training.weight_decay,
-        )
-
-        with self.accelerator.main_process_first():
-            train_loader, val_loader = get_loader(cfg)
-
-        # Prepare model, optimizer, loss_fn, and dataloaders for distributed training (or single GPU)
-        (
-            self.model,
-            self.optimizer,
-            self.train_loader,
-            self.val_loader,
-        ) = self.accelerator.prepare(model, optimizer, train_loader, val_loader)
         self.min_loss = float("inf")
         self.current_epoch = 1
-
         self.max_acc = 0
+        self.metrics = Metrics(cfg.data.num_classes)
 
-        # Resume or not
-        if self.cfg.model.resume_path is not None:
-            with self.accelerator.main_process_first():
-                self.load_from_checkpoint()
+        self.accelerator.init_trackers(
+            self.accelerator.project_configuration.project_dir, config=self.cfg.to_dict()
+        )
 
     def load_from_checkpoint(self):
         """
@@ -125,39 +106,72 @@ class Engine(BaseEngine):
     def validate(self):
         valid_progress = self.sub_task_progress.add_task("validate", total=len(self.val_loader))
         total_acc = 0
+        all_preds = []
+        all_labels = []
+        all_losses = []
+        
         self.model.eval()
-        for img, label in self.val_loader:
-            pred = self.model(img)
-            batch_pred, batch_label = self.accelerator.gather_for_metrics((pred, label))
-            correct = (batch_pred.argmax(1) == batch_label).sum().item()
-            total_acc += correct / len(label)
-            self.sub_task_progress.update(valid_progress, advance=1)
-        total_acc /= len(self.val_loader)
+        with torch.no_grad():
+            for img, label in self.val_loader:
+                pred = self.model(img)
+                loss = F.cross_entropy(pred, label)
+                all_losses.append(loss.item())
+                
+                batch_pred, batch_label = self.accelerator.gather_for_metrics((pred, label))
+                all_preds.append(batch_pred)
+                all_labels.append(batch_label)
+                
+                self.sub_task_progress.update(valid_progress, advance=1)
+        
+        all_preds = torch.cat(all_preds)
+        all_labels = torch.cat(all_labels)
+        
+        metric_results = self.metrics.compute(all_preds, all_labels, all_losses)
+        
         if self.accelerator.is_main_process:
-            self.accelerator.print(f"val. acc. at epoch {self.current_epoch}: {total_acc:.3f}")
+            self.accelerator.print(
+                f"val. acc.: {metric_results['accuracy']:.3f}, loss: {metric_results['loss']:.3f}, "
+                f"precision: {metric_results['precision']:.3f}, recall: {metric_results['recall']:.3f}, f1: {metric_results['f1']:.3f}"
+            )
             self.accelerator.log(
                 {
-                    "acc/val": total_acc,
+                    "acc/val": metric_results['accuracy'],
+                    "loss/val": metric_results['loss'],
+                    "precision/val": metric_results['precision'],
+                    "recall/val": metric_results['recall'],
+                    "f1/val": metric_results['f1']
                 },
                 step=self.current_epoch * len(self.train_loader),  # Use train steps
             )
         if self.accelerator.is_main_process and total_acc > self.max_acc:
             save_path = os.path.join(self.base_dir, "checkpoint")
-            self.accelerator.print(f"new best found with: {total_acc:.3f}, save to {save_path}")
-            self.max_acc = total_acc
-            self.save_checkpoint(
-                os.path.join(
-                    save_path,
-                    f"epoch_{self.current_epoch}",
-                ),
-            )
+            self.accelerator.print(f"new best found with: {metric_results['accuracy']:.3f}, save to {save_path}")
+            self.max_acc = metric_results['accuracy']
+            self.save_checkpoint(os.path.join(save_path, f"epoch_{self.current_epoch}"))
+        
         self.sub_task_progress.remove_task(valid_progress)
 
     def setup_training(self):
         os.makedirs(os.path.join(self.base_dir, "checkpoint"), exist_ok=True)
-        self.accelerator.init_trackers(
-            self.accelerator.project_configuration.project_dir, config=self.cfg.to_dict()
+        
+        model = build_model(self.cfg)
+        self.loss_fn = build_loss(self.cfg)
+        optimizer = torch.optim.AdamW(
+            model.parameters(),
+            lr=self.cfg.training.lr * self.accelerator.num_processes,
+            weight_decay=self.cfg.training.weight_decay,
         )
+
+        with self.accelerator.main_process_first():
+            train_loader, val_loader = get_loader(self.cfg)
+
+        (
+            self.model,
+            self.optimizer,
+            self.train_loader,
+            self.val_loader,
+        ) = self.accelerator.prepare(model, optimizer, train_loader, val_loader)
+        
 
     def train(self):
         train_progress = self.epoch_progress.add_task(
@@ -167,8 +181,8 @@ class Engine(BaseEngine):
             acc=self.max_acc,
         )
         if self.accelerator.is_main_process:
-            self.print_training_details()
             self.setup_training()
+            self.print_training_details()
         self.accelerator.wait_for_everyone()
         for epoch in range(self.current_epoch, self.cfg.training.epochs + 1):
             self.current_epoch = epoch

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import dataclasses
-from typing import List, Literal, Optional
+from typing import List, Literal, Optional, ClassVar
 
 from dataclass_wizard import JSONPyWizard
 
@@ -27,17 +27,27 @@ class EvalConfig:
 
 
 @dataclasses.dataclass
+class CNNArchitectureConfig:
+    architecture: Literal["Classic", "VGGlike", "ResNet"] = "ResNet"
+    base_dim: int = 32
+    batch_normalization: bool = False
+    dropout: float = 0.0
+
+
+@dataclasses.dataclass
 class ModelConfig:
-    in_channels: int = 3
-    base_dim: int = 16
-    num_classes: int = 10
+    architecture: Literal["CNN"] = "CNN"
     resume_path: Optional[str] = None
 
 
 @dataclasses.dataclass
 class DataConfig:
+    num_classes: int = 10
+    in_channels: int = 3
+    image_size: int = 32
     root: str = "data"
     subset_size: Optional[int] = None
+    augmentation: Literal["BasicTransform", "BasicColors", "AutoAugment"] | None = None
 
 
 @dataclasses.dataclass
@@ -47,6 +57,7 @@ class Config(JSONPyWizard):
 
     # Config for model option
     model: ModelConfig
+    cnn: CNNArchitectureConfig
 
     # Config for data option
     data: DataConfig

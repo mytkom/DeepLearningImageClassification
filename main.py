@@ -1,19 +1,23 @@
 import accelerate
 import tyro
+import json
 
 from configs import Config
 from engine import build_engine
-
+from utils.config_merge import merge_configs
 
 def main():
     cfg = tyro.cli(Config)
 
+    # if config path specified, override CLI config only
+    # fields specified in json config
     if cfg.config is not None:
         with open(cfg.config, "r") as f:
-            json_cfg = Config.from_json(f.read())
+            json_cfg = json.load(f)
         if cfg.model.resume_path is not None:
-            json_cfg.model.resume_path = cfg.model.resume_path
-        cfg = json_cfg
+            json_cfg["model"]["resume_path"] = cfg.model.resume_path
+
+    merge_configs(cfg, json_cfg)
 
     project_config = accelerate.utils.ProjectConfiguration(
         project_dir=cfg.project_dir,

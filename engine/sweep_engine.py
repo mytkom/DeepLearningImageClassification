@@ -1,12 +1,14 @@
 import wandb
 
-from engine.train_engine import Engine
+import dataclasses
 
+from engine.train_engine import Engine
+from utils.config_merge import merge_configs
 
 class SweepEngine(Engine):
     def setup_training(self):
-        super().setup_training()
         self.accelerator.wait_for_everyone()
 
-        self.cfg.training.batch_size = wandb.config.batch_size
-        self.cfg.training.lr = wandb.config.learning_rate
+        merge_configs(self.cfg, wandb.config['sweep'])
+
+        super().setup_training()
