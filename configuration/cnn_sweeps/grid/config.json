@@ -15,8 +15,9 @@
         "architecture": "CNN"
     },
     "cnn": {
-        "architecture": "VGGlike",
-        "base_dim": 64
+        "architecture": "ResNet",
+        "base_dim": 64,
+        "batch_normalization": true
     },
     "data": {
         "root": "data"

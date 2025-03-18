@@ -6,14 +6,12 @@ from engine.train_engine import Engine
 
 
 def merge_configs(self_cfg, wandb_cfg):
-    """Merge wandb config into self config, preserving defaults."""
+    """Recursively merge wandb config into self config, preserving defaults."""
     for key, value in wandb_cfg.items():
         if hasattr(self_cfg, key):
             sub_cfg = getattr(self_cfg, key)
-            if dataclasses.is_dataclass(sub_cfg):
-                for sub_key, sub_value in value.items():
-                    if hasattr(sub_cfg, sub_key):
-                        setattr(sub_cfg, sub_key, sub_value)
+            if dataclasses.is_dataclass(sub_cfg) and isinstance(value, dict):
+                merge_configs(sub_cfg, value)
             else:
                 setattr(self_cfg, key, value)
 

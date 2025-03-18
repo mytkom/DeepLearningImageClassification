@@ -9,7 +9,6 @@
       "parameters": {
         "lr": {
           "values": [
-            0.001,
             0.0003,
             0.0001,
             0.00003
@@ -18,27 +17,17 @@
         "weight_decay": {
           "values": [
             0.0,
-            0.1,
-            0.5,
-            0.9
+            0.3,
+            0.6
           ]
         }
       }
     },
     "cnn": {
       "parameters": {
-        "batch_normalization": {
-          "values": [
-            true,
-            false
-          ]
-        },
         "dropout": {
           "values": [
             0.0,
-            0.05,
-            0.07,
-            0.1,
             0.3
           ]
         }
