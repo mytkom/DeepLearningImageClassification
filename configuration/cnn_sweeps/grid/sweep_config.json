@@ -5,31 +5,35 @@
     "goal": "maximize"
   },
   "parameters": {
-    "training": {
+    "sweep": {
       "parameters": {
-        "lr": {
-          "values": [
-            0.0003,
-            0.0001,
-            0.00003
-          ]
+        "training": {
+          "parameters": {
+            "lr": {
+              "values": [
+                0.0003,
+                0.0001,
+                0.00003
+              ]
+            },
+            "weight_decay": {
+              "values": [
+                0.0,
+                0.3,
+                0.6
+              ]
+            }
+          }
         },
-        "weight_decay": {
-          "values": [
-            0.0,
-            0.3,
-            0.6
-          ]
-        }
-      }
-    },
-    "cnn": {
-      "parameters": {
-        "dropout": {
-          "values": [
-            0.0,
-            0.3
-          ]
+        "cnn": {
+          "parameters": {
+            "dropout": {
+              "values": [
+                0.0,
+                0.3
+              ]
+            }
+          }
         }
       }
     }
