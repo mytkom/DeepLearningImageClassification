@@ -23,7 +23,6 @@
         "num_workers": 4,
         "batch_size": 32
     },
-    "project_dir": "data_augmentation",
     "log_dir": "logs",
     "project_tracker": ["wandb"],
     "mixed_precision": "no",
