@@ -51,6 +51,13 @@ class DataConfig:
 
 
 @dataclasses.dataclass
+class SweepConfig:
+    name: Optional[str] = None
+    config: str = ""
+    project_name: str = ""
+
+
+@dataclasses.dataclass
 class Config(JSONPyWizard):
     # Config for training option
     training: TrainingConfig
@@ -65,6 +72,7 @@ class Config(JSONPyWizard):
     # Config for evaluation option
     evaluation: EvalConfig
 
+    sweep: SweepConfig
     project_dir: str = "project"
     log_dir: str = "logs"
     project_tracker: List[str] = dataclasses.field(default_factory=lambda: ["wandb"])

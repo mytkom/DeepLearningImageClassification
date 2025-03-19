@@ -11,6 +11,10 @@
         "lr": 0.001,
         "weight_decay": 0.0
     },
+    "sweep": {
+        "config": "configuration/regularization/sweep_config.json",
+        "project_name": "regularization_test"
+    },
     "cnn": {
         "base_dim": 64,
         "batch_normalization": true,

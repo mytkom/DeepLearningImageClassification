@@ -1,6 +1,6 @@
 #!/usr/bin/bash
 
-python3 sweep.py --config configuration/regularization/config.json --model.architecture=CNN --cnn.architecture=Classic --project-dir=data_augmentation_Classic
-python3 sweep.py --config configuration/regularization/config.json --model.architecture=CNN --cnn.architecture=ResNet --project-dir=data_augmentation_ResNet
-python3 sweep.py --config configuration/regularization/config.json --model.architecture=CNN --cnn.architecture=VGGlike --project-dir=data_augmentation_VGGlike
-# python3 sweep.py --config configuration/regularization/config.json --model.architecture=ViT --project-dir=data_augmentation_ViT
+SWEEP_SUBDIR=regularization
+python3 sweep.py --config configuration/$SWEEP_SUBDIR/config.json --model.architecture=CNN --cnn.architecture=Classic --project-dir=${SWEEP_SUBDIR}_Classic --sweep.name=Classic
+python3 sweep.py --config configuration/$SWEEP_SUBDIR/config.json --model.architecture=CNN --cnn.architecture=ResNet --project-dir=${SWEEP_SUBDIR}_ResNet --sweep.name=ResNet
+python3 sweep.py --config configuration/$SWEEP_SUBDIR/config.json --model.architecture=CNN --cnn.architecture=VGGlike --project-dir=${SWEEP_SUBDIR}_VGGlike --sweep.name=VGGlike
