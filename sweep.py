@@ -40,11 +40,11 @@ def sweep():
     engine.close()
 
 if __name__ == "__main__":
-    with open("configuration/data_augmentation/sweep_config.json") as f:
+    with open("configuration/regularization/sweep_config.json") as f:
         sweep_configuration = yaml.safe_load(f)
 
     sweep_id = wandb.sweep(
         sweep=sweep_configuration,
-        project="data_augmentation_test",
+        project="regularization_test",
     )
     wandb.agent(sweep_id, function=sweep)

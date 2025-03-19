@@ -1,0 +1,37 @@
+{
+  "method": "grid",
+  "metric": {
+    "name": "acc/val",
+    "goal": "maximize"
+  },
+  "parameters": {
+    "sweep": {
+      "parameters": {
+        "training": {
+          "parameters": {
+            "weight_decay": {
+              "values": [
+                0.0,
+                0.2,
+                0.4,
+                0.6
+              ]
+            }
+          }
+        },
+        "cnn": {
+          "parameters": {
+            "dropout": {
+              "values": [
+                0.0,
+                0.1,
+                0.2,
+                0.3
+              ]
+            }
+          }
+        }
+      }
+    }
+  }
+}
