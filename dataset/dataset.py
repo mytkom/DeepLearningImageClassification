@@ -1,5 +1,5 @@
 import os
-from typing import Tuple
+from typing import Tuple, Optional
 
 import numpy as np
 import torchvision
@@ -18,33 +18,44 @@ class CINIC10(Dataset):
     cinic_std = [0.24205776, 0.23828046, 0.25874835]
 
 
-def get_loader(cfg: Config) -> Tuple[DataLoader, DataLoader]:
-    if cfg.data.augmentation == "BasicTransform":
-        augmentation = transforms.Compose(
-            [
-                transforms.RandomCrop(32, padding=4),
-                transforms.RandomRotation(15),
-                transforms.RandomAdjustSharpness(sharpness_factor=2),
-            ]
-        )
-    elif cfg.data.augmentation == "BasicColors":
-        augmentation = transforms.Compose(
-            [
-                transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2),
-            ]
-        )
-    elif cfg.data.augmentation == "AutoAugment":
-        augmentation = AutoAugment()
+def get_loader(cfg: Config, custom_transforms: Optional[transforms.Compose] = None) -> Tuple[DataLoader, DataLoader]:
+    if custom_transforms:
+        train_transform = custom_transforms
+        val_transform = custom_transforms
     else:
-        augmentation = transforms.Compose([])  # No augmentation
+        if cfg.data.augmentation == "BasicTransform":
+            augmentation = transforms.Compose(
+                [
+                    transforms.RandomCrop(32, padding=4),
+                    transforms.RandomRotation(15),
+                    transforms.RandomAdjustSharpness(sharpness_factor=2),
+                ]
+            )
+        elif cfg.data.augmentation == "BasicColors":
+            augmentation = transforms.Compose(
+                [
+                    transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2),
+                ]
+            )
+        elif cfg.data.augmentation == "AutoAugment":
+            augmentation = AutoAugment()
+        else:
+            augmentation = transforms.Compose([])  # No augmentation
 
-    train_transform = transforms.Compose(
-        [
-            augmentation,
-            transforms.ToTensor(),
-            transforms.Normalize(mean=CINIC10.cinic_mean, std=CINIC10.cinic_std),
-        ]
-    )
+        train_transform = transforms.Compose(
+            [
+                augmentation,
+                transforms.ToTensor(),
+                transforms.Normalize(mean=CINIC10.cinic_mean, std=CINIC10.cinic_std),
+            ]
+        )
+
+        val_transform = transforms.Compose(
+            [
+                transforms.ToTensor(),
+                transforms.Normalize(mean=CINIC10.cinic_mean, std=CINIC10.cinic_std),
+            ]
+        )
 
     cinic_train = torchvision.datasets.ImageFolder(
         os.path.join(cfg.data.root, CINIC10.cinic_directory, "train"),
@@ -52,12 +63,7 @@ def get_loader(cfg: Config) -> Tuple[DataLoader, DataLoader]:
     )
     cinic_valid = torchvision.datasets.ImageFolder(
         os.path.join(cfg.data.root, CINIC10.cinic_directory, "valid"),
-        transform=transforms.Compose(
-            [
-                transforms.ToTensor(),
-                transforms.Normalize(mean=CINIC10.cinic_mean, std=CINIC10.cinic_std),
-            ]
-        ),
+        transform=val_transform,
     )
 
     if cfg.data.subset_size:
