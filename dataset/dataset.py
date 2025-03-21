@@ -20,42 +20,42 @@ class CINIC10(Dataset):
 
 def get_loader(cfg: Config, custom_transforms: Optional[transforms.Compose] = None) -> Tuple[DataLoader, DataLoader]:
     if custom_transforms:
-        train_transform = custom_transforms
-        val_transform = custom_transforms
+        base_transforms = custom_transforms
     else:
-        if cfg.data.augmentation == "BasicTransform":
-            augmentation = transforms.Compose(
-                [
-                    transforms.RandomCrop(32, padding=4),
-                    transforms.RandomRotation(15),
-                    transforms.RandomAdjustSharpness(sharpness_factor=2),
-                ]
-            )
-        elif cfg.data.augmentation == "BasicColors":
-            augmentation = transforms.Compose(
-                [
-                    transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2),
-                ]
-            )
-        elif cfg.data.augmentation == "AutoAugment":
-            augmentation = AutoAugment()
-        else:
-            augmentation = transforms.Compose([])  # No augmentation
-
-        train_transform = transforms.Compose(
+        base_transforms = transforms.Compose(
             [
-                augmentation,
                 transforms.ToTensor(),
-                transforms.Normalize(mean=CINIC10.cinic_mean, std=CINIC10.cinic_std),
+                transforms.Normalize(mean=CINIC10.cinic_mean, std=CINIC10.cinic_std)
             ]
         )
 
-        val_transform = transforms.Compose(
+    if cfg.data.augmentation == "BasicTransform":
+        augmentation = transforms.Compose(
             [
-                transforms.ToTensor(),
-                transforms.Normalize(mean=CINIC10.cinic_mean, std=CINIC10.cinic_std),
+                transforms.RandomCrop(32, padding=4),
+                transforms.RandomRotation(15),
+                transforms.RandomAdjustSharpness(sharpness_factor=2),
             ]
         )
+    elif cfg.data.augmentation == "BasicColors":
+        augmentation = transforms.Compose(
+            [
+                transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2),
+            ]
+        )
+    elif cfg.data.augmentation == "AutoAugment":
+        augmentation = AutoAugment()
+    else:
+        augmentation = transforms.Compose([])  # No augmentation
+
+    train_transform = transforms.Compose(
+        [
+            augmentation,
+            base_transforms
+        ]
+    )
+
+    val_transform = base_transforms
 
     cinic_train = torchvision.datasets.ImageFolder(
         os.path.join(cfg.data.root, CINIC10.cinic_directory, "train"),
