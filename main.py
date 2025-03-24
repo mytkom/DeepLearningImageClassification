@@ -17,7 +17,7 @@ def main():
         if cfg.model.resume_path is not None:
             json_cfg["model"]["resume_path"] = cfg.model.resume_path
 
-    # merge_configs(cfg, json_cfg)
+    merge_configs(cfg, json_cfg)
 
     project_config = accelerate.utils.ProjectConfiguration(
         project_dir=cfg.project_dir,
