@@ -158,7 +158,6 @@ class PretrainedModel(nn.Module):
         super(PretrainedModel, self).__init__()
         self.model = timm.create_model(model_name, pretrained=True)
 
-        # Replace the final layer to match the number of classes
         if hasattr(self.model, 'fc'):
             in_features = self.model.fc.in_features
             self.model.fc = nn.Linear(in_features, num_classes)
@@ -168,11 +167,9 @@ class PretrainedModel(nn.Module):
         else:
             raise RuntimeError(f"Model {model_name} does not have a known classifier layer")
 
-        # Optionally freeze pretrained layers
         if freeze_pretrained:
             for param in self.model.parameters():
                 param.requires_grad = False
-            # Ensure the final layer is trainable
             if hasattr(self.model, 'fc'):
                 for param in self.model.fc.parameters():
                     param.requires_grad = True
