@@ -11,6 +11,10 @@
         "lr": 0.001,
         "weight_decay": 0.0
     },
+    "sweep": {
+        "config": "configuration/data_augmentation/sweep_config.json",
+        "project_name": "data_augmentation_test"
+    },
     "cnn": {
         "base_dim": 64,
         "batch_normalization": true,
@@ -26,6 +30,5 @@
     "log_dir": "logs",
     "project_tracker": ["wandb"],
     "mixed_precision": "no",
-    "seed": 42,
-    "config": null
+    "seed": 42
 }

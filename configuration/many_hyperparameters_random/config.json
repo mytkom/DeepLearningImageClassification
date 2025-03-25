@@ -14,8 +14,9 @@
     "model": {
         "architecture": "CNN"
     },
-    "cnn": {
-        "architecture": "ResNet"
+    "sweep": {
+        "config": "configuration/many_hyperparameters_random/sweep_config.json",
+        "project_name": "many_hyperparameters_random_test"
     },
     "data": {
         "root": "data"
