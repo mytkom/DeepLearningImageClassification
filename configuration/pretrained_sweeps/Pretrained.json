@@ -1,6 +1,6 @@
 {
     "training": {
-        "engine": "train_engine",
+        "engine": "sweep_engine",
         "label_smoothing": 0.0,
         "batch_size": 32,
         "val_freq": 1,
