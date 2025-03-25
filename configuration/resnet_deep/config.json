@@ -1,0 +1,36 @@
+{
+    "training": {
+        "engine": "sweep_engine",
+        "label_smoothing": 0.0,
+        "batch_size": 128,
+        "val_freq": 1,
+        "epochs": 30,
+        "num_workers": 4,
+        "accum_iter": 1,
+        "mixed_precision": "fp16",
+        "lr": 0.001,
+        "weight_decay": 0.001
+    },
+    "sweep": {
+        "config": "configuration/resnet_deep/sweep_config.json",
+        "project_name": "resnet_deep_test"
+    },
+    "cnn": {
+        "base_dim": 32,
+        "batch_normalization": true,
+        "dropout": 0.0
+    },
+    "data": {
+        "root": "data",
+        "augmentation": "BasicTransform"
+    },
+    "evaluation": {
+        "num_workers": 4,
+        "batch_size": 32
+    },
+    "log_dir": "logs",
+    "project_tracker": ["wandb"],
+    "mixed_precision": "no",
+    "seed": 42,
+    "config": null
+}

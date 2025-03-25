@@ -80,10 +80,10 @@ class ClassicCNN(ConfigurableCNN):
 
 
 class ResNetBlock(nn.Module):
-    def __init__(self, in_channels, out_channels, use_bn=False):
+    def __init__(self, in_channels, out_channels, use_bn=False, stride=1):
         super().__init__()
         self.conv1 = nn.Conv2d(
-            in_channels, out_channels, kernel_size=3, padding=1, bias=not use_bn
+            in_channels, out_channels, kernel_size=3, padding=1, stride=stride, bias=not use_bn
         )
         self.bn1 = nn.BatchNorm2d(out_channels) if use_bn else nn.Identity()
         self.conv2 = nn.Conv2d(
@@ -125,6 +125,50 @@ class ResNet(ConfigurableCNN):
         x = torch.flatten(x, 1)
         return self.fc(x)
 
+# after a while, it turns out that in comparison to original ResNets our
+# architectures have little number of layers https://arxiv.org/abs/1512.03385
+# we would check if ResNetDeep it performs better that ResNet class
+class ResNetDeep(ConfigurableCNN):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.feature_extractor = nn.Sequential(
+            ResNetBlock(self.input_channels, self.base_filters, self.use_bn),
+            nn.MaxPool2d(2, 2),
+
+            # 3 res layers
+            ResNetBlock(self.base_filters, self.base_filters, self.use_bn),
+            ResNetBlock(self.base_filters, self.base_filters, self.use_bn),
+            ResNetBlock(self.base_filters, self.base_filters, self.use_bn),
+
+            # stride, 4 res layers
+            ResNetBlock(self.base_filters, self.base_filters * 2, self.use_bn, stride=2),
+            ResNetBlock(self.base_filters * 2, self.base_filters * 2, self.use_bn),
+            ResNetBlock(self.base_filters * 2, self.base_filters * 2, self.use_bn),
+            ResNetBlock(self.base_filters * 2, self.base_filters * 2, self.use_bn),
+
+            # stride, 6 res layers
+            ResNetBlock(self.base_filters * 2, self.base_filters * 4, self.use_bn, stride=2),
+            ResNetBlock(self.base_filters * 4, self.base_filters * 4, self.use_bn),
+            ResNetBlock(self.base_filters * 4, self.base_filters * 4, self.use_bn),
+            ResNetBlock(self.base_filters * 4, self.base_filters * 4, self.use_bn),
+            ResNetBlock(self.base_filters * 4, self.base_filters * 4, self.use_bn),
+            ResNetBlock(self.base_filters * 4, self.base_filters * 4, self.use_bn),
+
+            # stride, 3 res layers
+            ResNetBlock(self.base_filters * 4, self.base_filters * 8, self.use_bn, stride=2),
+            ResNetBlock(self.base_filters * 8, self.base_filters * 8, self.use_bn),
+            ResNetBlock(self.base_filters * 8, self.base_filters * 8, self.use_bn),
+
+            nn.AvgPool2d(self.image_size // 16),
+        )
+        in_features = self.base_filters * 8
+        self.fc = self.fc_layers(in_features)
+
+    def forward(self, x):
+        x = self.feature_extractor(x)
+        x = torch.flatten(x, 1)
+        return self.fc(x)
+
 
 class VGGlike(ConfigurableCNN):
     def __init__(self, *args, **kwargs):
@@ -154,7 +198,7 @@ class VGGlike(ConfigurableCNN):
         return self.fc(x)
 
 
-CNN_MAP = {"Classic": ClassicCNN, "ResNet": ResNet, "VGGlike": VGGlike}
+CNN_MAP = {"Classic": ClassicCNN, "ResNet": ResNet, "ResNetDeep": ResNetDeep, "VGGlike": VGGlike}
 
 
 # parameters based on best performing setup from Appendix A of https://arxiv.org/abs/2210.07240

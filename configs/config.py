@@ -28,7 +28,7 @@ class EvalConfig:
 
 @dataclasses.dataclass
 class CNNArchitectureConfig:
-    architecture: Literal["Classic", "VGGlike", "ResNet"] = "ResNet"
+    architecture: Literal["Classic", "VGGlike", "ResNet", "ResNetDeep"] = "ResNet"
     base_dim: int = 32
     batch_normalization: bool = False
     dropout: float = 0.0
