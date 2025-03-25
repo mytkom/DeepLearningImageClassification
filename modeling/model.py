@@ -92,7 +92,7 @@ class ResNetBlock(nn.Module):
         self.bn2 = nn.BatchNorm2d(out_channels) if use_bn else nn.Identity()
         self.relu = nn.ReLU()
         self.shortcut = (
-            nn.Conv2d(in_channels, out_channels, kernel_size=1, bias=False)
+            nn.Conv2d(in_channels, out_channels, kernel_size=1, bias=False, stride=stride)
             if in_channels != out_channels
             else nn.Identity()
         )

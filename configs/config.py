@@ -47,7 +47,8 @@ class DataConfig:
     image_size: int = 32
     root: str = "data"
     subset_size: Optional[int] = None
-    augmentation: Literal["BasicTransform", "BasicColors", "AutoAugment"] | None = None
+    augmentation: Literal["BasicTransform", "BasicColors", "AutoAugment", "All"] | None = None
+    mix_augmentations: bool = False
 
 
 @dataclasses.dataclass

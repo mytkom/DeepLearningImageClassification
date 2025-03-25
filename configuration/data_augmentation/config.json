@@ -16,7 +16,7 @@
         "project_name": "data_augmentation_test"
     },
     "cnn": {
-        "base_dim": 64,
+        "base_dim": 32,
         "batch_normalization": true,
         "dropout": 0.0
     },

@@ -14,7 +14,14 @@
                 null,
                 "BasicTransform",
                 "BasicColors",
-                "AutoAugment"
+                "AutoAugment",
+                "All"
+              ]
+            },
+            "mix_augmentations": {
+              "values": [
+                true,
+                false
               ]
             }
           }
