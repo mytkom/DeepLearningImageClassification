@@ -9,24 +9,17 @@
       "parameters": {
         "training": {
           "parameters": {
-            "weight_decay": {
+            "lr": {
               "values": [
-                0.0,
-                0.2,
-                0.4,
-                0.6
+                0.003,
+                0.001,
+                0.0003
               ]
-            }
-          }
-        },
-        "cnn": {
-          "parameters": {
-            "dropout": {
+            },
+            "label_smoothing": {
               "values": [
-                0.0,
-                0.1,
-                0.2,
-                0.3
+                0,
+                0.01
               ]
             }
           }

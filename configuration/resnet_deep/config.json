@@ -4,10 +4,10 @@
         "label_smoothing": 0.0,
         "batch_size": 128,
         "val_freq": 1,
-        "epochs": 30,
+        "epochs": 100,
         "num_workers": 4,
         "accum_iter": 1,
-        "mixed_precision": "fp16",
+        "mixed_precision": "no",
         "lr": 0.001,
         "weight_decay": 0.001
     },
@@ -22,14 +22,17 @@
     },
     "data": {
         "root": "data",
-        "augmentation": "BasicTransform"
+        "augmentation": "BasicTransform",
+        "mix_augmentations": true
     },
     "evaluation": {
         "num_workers": 4,
         "batch_size": 32
     },
     "log_dir": "logs",
-    "project_tracker": ["wandb"],
+    "project_tracker": [
+        "wandb"
+    ],
     "mixed_precision": "no",
     "seed": 42,
     "config": null
