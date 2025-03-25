@@ -2,20 +2,23 @@
     "training": {
         "engine": "sweep_engine",
         "label_smoothing": 0.0,
-        "batch_size": 32,
+        "batch_size": 128,
         "val_freq": 1,
-        "epochs": 20,
+        "epochs": 30,
         "num_workers": 4,
         "accum_iter": 1,
-        "mixed_precision": "no",
-        "lr": 0.0003,
-        "weight_decay": 0.0001
+        "mixed_precision": "fp16",
+        "lr": 0.001,
+        "weight_decay": 0.0
     },
-    "model": {
-        "architecture": "CNN"
+    "sweep": {
+        "config": "configuration/data_augmentation/sweep_config.json",
+        "project_name": "data_augmentation_test"
     },
     "cnn": {
-        "architecture": "ResNet"
+        "base_dim": 32,
+        "batch_normalization": true,
+        "dropout": 0.0
     },
     "data": {
         "root": "data"
@@ -24,10 +27,8 @@
         "num_workers": 4,
         "batch_size": 32
     },
-    "project_dir": "project",
     "log_dir": "logs",
     "project_tracker": ["wandb"],
     "mixed_precision": "no",
-    "seed": 0,
-    "config": null
+    "seed": 42
 }

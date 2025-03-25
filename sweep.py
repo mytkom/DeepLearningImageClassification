@@ -10,19 +10,7 @@ from engine import build_engine
 from utils.config_merge import merge_configs
 
 
-def sweep():
-    cfg = tyro.cli(Config)
-
-    # if config path specified, override CLI config only
-    # fields specified in json config
-    if cfg.config is not None:
-        with open(cfg.config, "r") as f:
-            json_cfg = json.load(f)
-        if cfg.model.resume_path is not None:
-            json_cfg["model"]["resume_path"] = cfg.model.resume_path
-
-    merge_configs(cfg, json_cfg)
-
+def sweep(cfg: Config):
     project_config = accelerate.utils.ProjectConfiguration(
         project_dir=cfg.project_dir,
         logging_dir=cfg.log_dir,
@@ -40,11 +28,26 @@ def sweep():
     engine.close()
 
 if __name__ == "__main__":
-    with open("configuration/cnn_sweeps/grid/sweep_config.json") as f:
+    cfg = tyro.cli(Config)
+
+    # if config path specified, override CLI config only
+    # fields specified in json config
+    if cfg.config is not None:
+        with open(cfg.config, "r") as f:
+            json_cfg = json.load(f)
+        if cfg.model.resume_path is not None:
+            json_cfg["model"]["resume_path"] = cfg.model.resume_path
+
+    merge_configs(cfg, json_cfg)
+
+    with open(cfg.sweep.config) as f:
         sweep_configuration = yaml.safe_load(f)
+
+    if cfg.sweep.name:
+        sweep_configuration['name'] = cfg.sweep.name
 
     sweep_id = wandb.sweep(
         sweep=sweep_configuration,
-        project="cnns_sweep_dummy tests",
+        project=cfg.sweep.project_name,
     )
-    wandb.agent(sweep_id, function=sweep)
+    wandb.agent(sweep_id, function=lambda: sweep(cfg))

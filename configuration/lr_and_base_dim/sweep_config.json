@@ -1,0 +1,36 @@
+{
+  "method": "grid",
+  "metric": {
+    "name": "acc/val",
+    "goal": "maximize"
+  },
+  "parameters": {
+    "sweep": {
+      "parameters": {
+        "training": {
+          "parameters": {
+            "lr": {
+              "values": [
+                0.01,
+                0.003,
+                0.001,
+                0.0003
+              ]
+            }
+          }
+        },
+        "cnn": {
+          "parameters": {
+            "base_dim": {
+              "values": [
+                32,
+                64,
+                128
+              ]
+            }
+          }
+        }
+      }
+    }
+  }
+}

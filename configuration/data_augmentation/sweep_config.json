@@ -1,0 +1,32 @@
+{
+  "method": "grid",
+  "metric": {
+    "name": "acc/val",
+    "goal": "maximize"
+  },
+  "parameters": {
+    "sweep": {
+      "parameters": {
+        "data": {
+          "parameters": {
+            "augmentation": {
+              "values": [
+                null,
+                "BasicTransform",
+                "BasicColors",
+                "AutoAugment",
+                "All"
+              ]
+            },
+            "mix_augmentations": {
+              "values": [
+                true,
+                false
+              ]
+            }
+          }
+        }
+      }
+    }
+  }
+}

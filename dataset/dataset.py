@@ -4,11 +4,10 @@ from typing import Tuple
 import numpy as np
 import torchvision
 from torch.utils.data import DataLoader, Dataset, Subset
-from torchvision.transforms import transforms
-from torchvision.transforms.autoaugment import AutoAugment
+from torchvision.transforms import v2
+from torch.utils.data import default_collate
 
 from configs import Config
-
 
 class CINIC10(Dataset):
     """CINIC10 dataset contants."""
@@ -19,43 +18,60 @@ class CINIC10(Dataset):
 
 
 def get_loader(cfg: Config) -> Tuple[DataLoader, DataLoader]:
+    augmentation = v2.Identity()  # No augmentation
+
     if cfg.data.augmentation == "BasicTransform":
-        augmentation = transforms.Compose(
+        augmentation = v2.Compose(
             [
-                transforms.RandomCrop(32, padding=4),
-                transforms.RandomRotation(15),
-                transforms.RandomAdjustSharpness(sharpness_factor=2),
+                v2.RandomCrop(32, padding=4),
+                v2.RandomRotation(15),
+                v2.RandomAdjustSharpness(sharpness_factor=2),
             ]
         )
     elif cfg.data.augmentation == "BasicColors":
-        augmentation = transforms.Compose(
+        augmentation = v2.Compose(
             [
-                transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2),
+                v2.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2),
             ]
         )
     elif cfg.data.augmentation == "AutoAugment":
-        augmentation = AutoAugment()
-    else:
-        augmentation = transforms.Compose([])  # No augmentation
+        augmentation = v2.AutoAugment()
+    elif cfg.data.augmentation == "All":
+        augmentation = v2.Compose(
+            [
+                v2.RandomCrop(32, padding=4),
+                v2.RandomRotation(15),
+                v2.RandomAdjustSharpness(sharpness_factor=2),
+                v2.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2),
+                v2.AutoAugment(),
+            ]
+        )
 
-    train_transform = transforms.Compose(
+    collate = default_collate
+    if cfg.data.mix_augmentations:
+        cutmix = v2.CutMix(num_classes=cfg.data.num_classes)
+        mixup = v2.MixUp(num_classes=cfg.data.num_classes)
+        cutmix_or_mixup = v2.RandomChoice([cutmix, mixup])
+        collate = lambda batch: cutmix_or_mixup(*default_collate(batch))
+
+    train_transform = v2.Compose(
         [
             augmentation,
-            transforms.ToTensor(),
-            transforms.Normalize(mean=CINIC10.cinic_mean, std=CINIC10.cinic_std),
+            v2.ToTensor(),
+            v2.Normalize(mean=CINIC10.cinic_mean, std=CINIC10.cinic_std),
         ]
     )
 
     cinic_train = torchvision.datasets.ImageFolder(
         os.path.join(cfg.data.root, CINIC10.cinic_directory, "train"),
-        transform=train_transform,
+        transform=train_transform
     )
     cinic_valid = torchvision.datasets.ImageFolder(
         os.path.join(cfg.data.root, CINIC10.cinic_directory, "valid"),
-        transform=transforms.Compose(
+        transform=v2.Compose(
             [
-                transforms.ToTensor(),
-                transforms.Normalize(mean=CINIC10.cinic_mean, std=CINIC10.cinic_std),
+                v2.ToTensor(),
+                v2.Normalize(mean=CINIC10.cinic_mean, std=CINIC10.cinic_std),
             ]
         ),
     )
@@ -74,6 +90,7 @@ def get_loader(cfg: Config) -> Tuple[DataLoader, DataLoader]:
         cinic_train,
         num_workers=cfg.training.num_workers,
         batch_size=cfg.training.batch_size,
+        collate_fn=collate,
         shuffle=True,
     )
     val_loader = DataLoader(
