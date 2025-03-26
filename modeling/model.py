@@ -27,7 +27,14 @@ class ConfigurableCNN(nn.Module):
 
     def conv_layer(self, in_channels, out_channels, kernel_size=3, stride=1, padding=1):
         layers = [
-            nn.Conv2d(in_channels, out_channels, kernel_size, stride, padding, bias=not self.use_bn)
+            nn.Conv2d(
+                in_channels,
+                out_channels,
+                kernel_size,
+                stride,
+                padding,
+                bias=not self.use_bn,
+            )
         ]
         if self.use_bn:
             layers.append(nn.BatchNorm2d(out_channels))
@@ -50,7 +57,9 @@ class ClassicCNN(ConfigurableCNN):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.feature_extractor = nn.Sequential(
-            self.conv_layer(self.input_channels, self.base_filters, kernel_size=5, padding=2),
+            self.conv_layer(
+                self.input_channels, self.base_filters, kernel_size=5, padding=2
+            ),
             nn.MaxPool2d(2, 2),
             self.conv_layer(self.base_filters, self.base_filters * 2),
             nn.MaxPool2d(2, 2),
@@ -69,15 +78,22 @@ class ClassicCNN(ConfigurableCNN):
 
 
 class ResNetBlock(nn.Module):
-    def __init__(self, in_channels, out_channels, use_bn=False):
+    def __init__(self, in_channels, out_channels, use_bn=False, stride=1):
         super().__init__()
-        self.conv1 = nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1, bias=not use_bn)
+        self.conv1 = nn.Conv2d(
+            in_channels, out_channels, kernel_size=3, padding=1, stride=stride, bias=not use_bn
+        )
         self.bn1 = nn.BatchNorm2d(out_channels) if use_bn else nn.Identity()
-        self.conv2 = nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1, bias=not use_bn)
+        self.conv2 = nn.Conv2d(
+            out_channels, out_channels, kernel_size=3, padding=1, bias=not use_bn
+        )
         self.bn2 = nn.BatchNorm2d(out_channels) if use_bn else nn.Identity()
         self.relu = nn.ReLU()
-        self.shortcut = nn.Conv2d(in_channels, out_channels, kernel_size=1,
-                                  bias=False) if in_channels != out_channels else nn.Identity()
+        self.shortcut = (
+            nn.Conv2d(in_channels, out_channels, kernel_size=1, bias=False, stride=stride)
+            if in_channels != out_channels
+            else nn.Identity()
+        )
 
     def forward(self, x):
         identity = self.shortcut(x)
@@ -107,6 +123,49 @@ class ResNet(ConfigurableCNN):
         x = torch.flatten(x, 1)
         return self.fc(x)
 
+# after a while, it turns out that in comparison to original ResNets our
+# architectures have little number of layers https://arxiv.org/abs/1512.03385
+# we would check if ResNetDeep it performs better that ResNet class
+class ResNetDeep(ConfigurableCNN):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.feature_extractor = nn.Sequential(
+            ResNetBlock(self.input_channels, self.base_filters, self.use_bn),
+            nn.MaxPool2d(2, 2),
+
+            # 3 res layers
+            ResNetBlock(self.base_filters, self.base_filters, self.use_bn),
+            ResNetBlock(self.base_filters, self.base_filters, self.use_bn),
+            ResNetBlock(self.base_filters, self.base_filters, self.use_bn),
+
+            # stride, 4 res layers
+            ResNetBlock(self.base_filters, self.base_filters * 2, self.use_bn, stride=2),
+            ResNetBlock(self.base_filters * 2, self.base_filters * 2, self.use_bn),
+            ResNetBlock(self.base_filters * 2, self.base_filters * 2, self.use_bn),
+            ResNetBlock(self.base_filters * 2, self.base_filters * 2, self.use_bn),
+
+            # stride, 6 res layers
+            ResNetBlock(self.base_filters * 2, self.base_filters * 4, self.use_bn, stride=2),
+            ResNetBlock(self.base_filters * 4, self.base_filters * 4, self.use_bn),
+            ResNetBlock(self.base_filters * 4, self.base_filters * 4, self.use_bn),
+            ResNetBlock(self.base_filters * 4, self.base_filters * 4, self.use_bn),
+            ResNetBlock(self.base_filters * 4, self.base_filters * 4, self.use_bn),
+            ResNetBlock(self.base_filters * 4, self.base_filters * 4, self.use_bn),
+
+            # stride, 3 res layers
+            ResNetBlock(self.base_filters * 4, self.base_filters * 8, self.use_bn, stride=2),
+            ResNetBlock(self.base_filters * 8, self.base_filters * 8, self.use_bn),
+            ResNetBlock(self.base_filters * 8, self.base_filters * 8, self.use_bn),
+
+            nn.AvgPool2d(self.image_size // 16),
+        )
+        in_features = self.base_filters * 8
+        self.fc = self.fc_layers(in_features)
+
+    def forward(self, x):
+        x = self.feature_extractor(x)
+        x = torch.flatten(x, 1)
+        return self.fc(x)
 
 class VGGlike(ConfigurableCNN):
     def __init__(self, *args, **kwargs):
@@ -136,7 +195,7 @@ class VGGlike(ConfigurableCNN):
         return self.fc(x)
 
 
-CNN_MAP = {"Classic": ClassicCNN, "ResNet": ResNet, "VGGlike": VGGlike}
+CNN_MAP = {"Classic": ClassicCNN, "ResNet": ResNet, "ResNetDeep": ResNetDeep, "VGGlike": VGGlike}
 
 
 # parameters based on best performing setup from Appendix A of https://arxiv.org/abs/2210.07240
@@ -207,5 +266,7 @@ def build_model(cfg: Config) -> nn.Module:
             )
     elif cfg.model.architecture == "Pretrained":
         return PretrainedModel(cfg.pretrained_model.model_name, cfg.data.num_classes, cfg.pretrained_model.freeze_pretrained)
+    elif cfg.model.architecture == "ViT":
+        return ViT3M(cfg.data.in_channels, cfg.data.num_classes)
     else:
         raise RuntimeError(f"Wrong model architecture set: {cfg.model.architecture}")

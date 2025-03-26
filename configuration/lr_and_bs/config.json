@@ -4,21 +4,26 @@
         "label_smoothing": 0.0,
         "batch_size": 32,
         "val_freq": 1,
-        "epochs": 20,
+        "epochs": 5,
         "num_workers": 4,
         "accum_iter": 1,
         "mixed_precision": "no",
         "lr": 0.0003,
         "weight_decay": 0.0001
     },
-    "model": {
-        "architecture": "CNN"
+    "sweep": {
+        "config": "configuration/lr_and_bs/sweep_config.json",
+        "project_name": "lr_and_bs_test"
     },
-    "cnn": {
-        "architecture": "Classic"
+    "model": {
+        "in_channels": 3,
+        "base_dim": 16,
+        "num_classes": 10,
+        "resume_path": null
     },
     "data": {
-        "root": "data"
+        "root": "data",
+        "subset_size": 100
     },
     "evaluation": {
         "num_workers": 4,

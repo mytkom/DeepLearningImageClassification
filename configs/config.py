@@ -28,7 +28,7 @@ class EvalConfig:
 
 @dataclasses.dataclass
 class CNNArchitectureConfig:
-    architecture: Literal["Classic", "VGGlike", "ResNet"] = "ResNet"
+    architecture: Literal["Classic", "VGGlike", "ResNet", "ResNetDeep"] = "ResNet"
     base_dim: int = 32
     batch_normalization: bool = False
     dropout: float = 0.0
@@ -36,7 +36,7 @@ class CNNArchitectureConfig:
 
 @dataclasses.dataclass
 class ModelConfig:
-    architecture: Literal["CNN", "Pretrained"] = "Pretrained"
+    architecture: Literal["CNN", "ViT", "Pretrained"] = "Pretrained"
     resume_path: Optional[str] = None
 
 
@@ -53,7 +53,15 @@ class DataConfig:
     image_size: int = 32
     root: str = "data"
     subset_size: Optional[int] = None
-    augmentation: Literal["BasicTransform", "BasicColors", "AutoAugment"] | None = None
+    augmentation: Literal["BasicTransform", "BasicColors", "AutoAugment", "All"] | None = None
+    mix_augmentations: bool = False
+
+
+@dataclasses.dataclass
+class SweepConfig:
+    name: Optional[str] = None
+    config: str = ""
+    project_name: str = ""
 
 
 @dataclasses.dataclass
@@ -72,6 +80,7 @@ class Config(JSONPyWizard):
     # Config for evaluation option
     evaluation: EvalConfig
 
+    sweep: SweepConfig
     project_dir: str = "project"
     log_dir: str = "logs"
     project_tracker: List[str] = dataclasses.field(default_factory=lambda: ["wandb"])
