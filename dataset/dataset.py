@@ -17,7 +17,7 @@ class CINIC10(Dataset):
     cinic_std = [0.24205776, 0.23828046, 0.25874835]
 
 
-def get_loader(cfg: Config, custom_transforms: Optional[transforms.Compose] = None) -> Tuple[DataLoader, DataLoader]:
+def get_loader(cfg: Config, custom_transforms: Optional[v2.Compose] = None) -> Tuple[DataLoader, DataLoader]:
     augmentation = v2.Identity()  # No augmentation
     
     if custom_transforms:
@@ -25,8 +25,8 @@ def get_loader(cfg: Config, custom_transforms: Optional[transforms.Compose] = No
     else:
         base_transforms = v2.Compose(
             [
-                transforms.ToTensor(),
-                transforms.Normalize(mean=CINIC10.cinic_mean, std=CINIC10.cinic_std)
+                v2.ToTensor(),
+                v2.Normalize(mean=CINIC10.cinic_mean, std=CINIC10.cinic_std)
             ]
         )
 
