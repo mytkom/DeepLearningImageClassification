@@ -23,7 +23,9 @@ class Engine(BaseEngine):
         self.metrics = Metrics(cfg.data.num_classes)
 
         self.accelerator.init_trackers(
-            self.accelerator.project_configuration.project_dir, config=self.cfg.to_dict(), init_kwargs={"wandb": self.cfg.to_dict()["wandb"]}
+            self.accelerator.project_configuration.project_dir,
+            config=self.cfg.to_dict(),
+            init_kwargs={"wandb": self.cfg.to_dict()["wandb"]},
         )
 
     def load_from_checkpoint(self):
@@ -110,25 +112,25 @@ class Engine(BaseEngine):
         all_preds = []
         all_labels = []
         all_losses = []
-        
+
         self.model.eval()
         with torch.no_grad():
             for img, label in self.val_loader:
                 pred = self.model(img)
                 loss = F.cross_entropy(pred, label)
                 all_losses.append(loss.item())
-                
+
                 batch_pred, batch_label = self.accelerator.gather_for_metrics((pred, label))
                 all_preds.append(batch_pred)
                 all_labels.append(batch_label)
-                
+
                 self.sub_task_progress.update(valid_progress, advance=1)
-        
+
         all_preds = torch.cat(all_preds)
         all_labels = torch.cat(all_labels)
-        
+
         metric_results = self.metrics.compute(all_preds, all_labels, all_losses)
-        
+
         if self.accelerator.is_main_process:
             self.accelerator.print(
                 f"val. acc.: {metric_results['accuracy']:.3f}, loss: {metric_results['loss']:.3f}, "
@@ -136,20 +138,22 @@ class Engine(BaseEngine):
             )
             self.accelerator.log(
                 {
-                    "acc/val": metric_results['accuracy'],
-                    "loss/val": metric_results['loss'],
-                    "precision/val": metric_results['precision'],
-                    "recall/val": metric_results['recall'],
-                    "f1/val": metric_results['f1']
+                    "acc/val": metric_results["accuracy"],
+                    "loss/val": metric_results["loss"],
+                    "precision/val": metric_results["precision"],
+                    "recall/val": metric_results["recall"],
+                    "f1/val": metric_results["f1"],
                 },
                 step=self.current_epoch * len(self.train_loader),  # Use train steps
             )
-        if self.accelerator.is_main_process and metric_results['accuracy'] > self.max_acc:
+        if self.accelerator.is_main_process and metric_results["accuracy"] > self.max_acc:
             save_path = os.path.join(self.base_dir, "checkpoint")
-            self.accelerator.print(f"new best found with: {metric_results['accuracy']:.3f}, save to {save_path}")
-            self.max_acc = metric_results['accuracy']
+            self.accelerator.print(
+                f"new best found with: {metric_results['accuracy']:.3f}, save to {save_path}"
+            )
+            self.max_acc = metric_results["accuracy"]
             self.save_checkpoint(os.path.join(save_path, f"epoch_{self.current_epoch}"))
-        
+
         self.sub_task_progress.remove_task(valid_progress)
 
     def setup_training(self):
@@ -172,7 +176,6 @@ class Engine(BaseEngine):
             self.train_loader,
             self.val_loader,
         ) = self.accelerator.prepare(model, optimizer, train_loader, val_loader)
-        
 
     def train(self):
         train_progress = self.epoch_progress.add_task(

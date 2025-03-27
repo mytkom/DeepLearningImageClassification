@@ -98,9 +98,7 @@ class BaseEngine:
             f" - 🧊 Non-trainable: {non_trainable_params}\n"
             f" - 🤯 Total: {total_params}"
         )
-        self.accelerator.log({
-            "model.trainable_parameters": trainable_params
-        })
+        self.accelerator.log({"model.trainable_parameters": trainable_params})
 
     def print_training_details(self):
         try:

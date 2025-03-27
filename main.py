@@ -6,6 +6,7 @@ from configs import Config
 from engine import build_engine
 from utils.config_merge import merge_configs
 
+
 def main():
     cfg = tyro.cli(Config)
 
