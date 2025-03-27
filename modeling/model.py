@@ -158,10 +158,8 @@ class ResNetDeep(ConfigurableCNN):
             ResNetBlock(self.base_filters * 4, self.base_filters * 8, self.use_bn, stride=2),
             ResNetBlock(self.base_filters * 8, self.base_filters * 8, self.use_bn),
             ResNetBlock(self.base_filters * 8, self.base_filters * 8, self.use_bn),
-
-            nn.AvgPool2d(self.image_size // 16),
         )
-        in_features = self.base_filters * 8
+        in_features = self.base_filters * 8 * (self.image_size // 16) ** 2
         self.fc = self.fc_layers(in_features)
 
     def forward(self, x):

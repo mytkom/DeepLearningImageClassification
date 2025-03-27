@@ -23,7 +23,7 @@ class Engine(BaseEngine):
         self.metrics = Metrics(cfg.data.num_classes)
 
         self.accelerator.init_trackers(
-            self.accelerator.project_configuration.project_dir, config=self.cfg.to_dict()
+            self.accelerator.project_configuration.project_dir, config=self.cfg.to_dict(), init_kwargs={"wandb": self.cfg.to_dict()["wandb"]}
         )
 
     def load_from_checkpoint(self):

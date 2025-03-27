@@ -27,6 +27,12 @@ class EvalConfig:
 
 
 @dataclasses.dataclass
+class WandbConfig:
+    name: str = None
+    tags: list[str] = dataclasses.field(default_factory=list)
+
+
+@dataclasses.dataclass
 class CNNArchitectureConfig:
     architecture: Literal["Classic", "VGGlike", "ResNet", "ResNetDeep"] = "ResNet"
     base_dim: int = 32
@@ -69,6 +75,8 @@ class Config(JSONPyWizard):
 
     # Config for data option
     data: DataConfig
+
+    wandb: WandbConfig
 
     # Config for evaluation option
     evaluation: EvalConfig
