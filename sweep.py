@@ -27,6 +27,7 @@ def sweep(cfg: Config):
     engine.train()
     engine.close()
 
+
 if __name__ == "__main__":
     cfg = tyro.cli(Config)
 
@@ -44,7 +45,7 @@ if __name__ == "__main__":
         sweep_configuration = yaml.safe_load(f)
 
     if cfg.sweep.name:
-        sweep_configuration['name'] = cfg.sweep.name
+        sweep_configuration["name"] = cfg.sweep.name
 
     sweep_id = wandb.sweep(
         sweep=sweep_configuration,

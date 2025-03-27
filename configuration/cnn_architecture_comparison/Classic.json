@@ -1,6 +1,6 @@
 {
     "training": {
-        "engine": "sweep_engine",
+        "engine": "engine",
         "label_smoothing": 0.0,
         "batch_size": 128,
         "val_freq": 1,
@@ -11,14 +11,15 @@
         "lr": 0.001,
         "weight_decay": 0.001
     },
-    "sweep": {
-        "config": "configuration/resnet_deep/sweep_config.json",
-        "project_name": "resnet_deep_test"
-    },
     "cnn": {
-        "base_dim": 64,
+        "base_dim": 80,
+        "architecture": "Classic",
         "batch_normalization": true,
         "dropout": 0.0
+    },
+    "wandb": {
+        "name": "Classic3M",
+        "tags": ["CNN comparison"]
     },
     "data": {
         "root": "data",
@@ -30,6 +31,7 @@
         "batch_size": 32
     },
     "log_dir": "logs",
+    "project_dir": "final_experiments",
     "project_tracker": [
         "wandb"
     ],

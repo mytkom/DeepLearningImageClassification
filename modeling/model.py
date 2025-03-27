@@ -59,9 +59,7 @@ class ClassicCNN(ConfigurableCNN):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.feature_extractor = nn.Sequential(
-            self.conv_layer(
-                self.input_channels, self.base_filters, kernel_size=5, padding=2
-            ),
+            self.conv_layer(self.input_channels, self.base_filters, kernel_size=5, padding=2),
             nn.MaxPool2d(2, 2),
             self.conv_layer(self.base_filters, self.base_filters * 2),
             nn.MaxPool2d(2, 2),
@@ -125,6 +123,7 @@ class ResNet(ConfigurableCNN):
         x = torch.flatten(x, 1)
         return self.fc(x)
 
+
 # after a while, it turns out that in comparison to original ResNets our
 # architectures have little number of layers https://arxiv.org/abs/1512.03385
 # we would check if ResNetDeep it performs better that ResNet class
@@ -134,18 +133,15 @@ class ResNetDeep(ConfigurableCNN):
         self.feature_extractor = nn.Sequential(
             ResNetBlock(self.input_channels, self.base_filters, self.use_bn),
             nn.MaxPool2d(2, 2),
-
             # 3 res layers
             ResNetBlock(self.base_filters, self.base_filters, self.use_bn),
             ResNetBlock(self.base_filters, self.base_filters, self.use_bn),
             ResNetBlock(self.base_filters, self.base_filters, self.use_bn),
-
             # stride, 4 res layers
             ResNetBlock(self.base_filters, self.base_filters * 2, self.use_bn, stride=2),
             ResNetBlock(self.base_filters * 2, self.base_filters * 2, self.use_bn),
             ResNetBlock(self.base_filters * 2, self.base_filters * 2, self.use_bn),
             ResNetBlock(self.base_filters * 2, self.base_filters * 2, self.use_bn),
-
             # stride, 6 res layers
             ResNetBlock(self.base_filters * 2, self.base_filters * 4, self.use_bn, stride=2),
             ResNetBlock(self.base_filters * 4, self.base_filters * 4, self.use_bn),
@@ -153,15 +149,12 @@ class ResNetDeep(ConfigurableCNN):
             ResNetBlock(self.base_filters * 4, self.base_filters * 4, self.use_bn),
             ResNetBlock(self.base_filters * 4, self.base_filters * 4, self.use_bn),
             ResNetBlock(self.base_filters * 4, self.base_filters * 4, self.use_bn),
-
             # stride, 3 res layers
             ResNetBlock(self.base_filters * 4, self.base_filters * 8, self.use_bn, stride=2),
             ResNetBlock(self.base_filters * 8, self.base_filters * 8, self.use_bn),
             ResNetBlock(self.base_filters * 8, self.base_filters * 8, self.use_bn),
-
-            nn.AvgPool2d(self.image_size // 16),
         )
-        in_features = self.base_filters * 8
+        in_features = self.base_filters * 8 * (self.image_size // 16) ** 2
         self.fc = self.fc_layers(in_features)
 
     def forward(self, x):
@@ -219,9 +212,7 @@ def build_model(cfg: Config) -> nn.Module:
     print("config just before model creation: ", cfg)
     if cfg.model.architecture == "CNN":
         if cfg.cnn.architecture not in CNN_MAP.keys():
-            raise RuntimeError(
-                f"Wrong CNN architecture specified: {cfg.cnn.architecture}"
-            )
+            raise RuntimeError(f"Wrong CNN architecture specified: {cfg.cnn.architecture}")
         else:
             return CNN_MAP[cfg.cnn.architecture](
                 cfg.data.in_channels,

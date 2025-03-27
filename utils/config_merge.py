@@ -1,5 +1,6 @@
 import dataclasses
 
+
 def merge_configs(dataclass_cfg, dict_conf):
     """
     Recursively merge dictionary override config into dataclass config object,

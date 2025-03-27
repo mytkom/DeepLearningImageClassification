@@ -9,6 +9,7 @@ from torch.utils.data import default_collate
 
 from configs import Config
 
+
 class CINIC10(Dataset):
     """CINIC10 dataset contants."""
 
@@ -63,8 +64,7 @@ def get_loader(cfg: Config) -> Tuple[DataLoader, DataLoader]:
     )
 
     cinic_train = torchvision.datasets.ImageFolder(
-        os.path.join(cfg.data.root, CINIC10.cinic_directory, "train"),
-        transform=train_transform
+        os.path.join(cfg.data.root, CINIC10.cinic_directory, "train"), transform=train_transform
     )
     cinic_valid = torchvision.datasets.ImageFolder(
         os.path.join(cfg.data.root, CINIC10.cinic_directory, "valid"),
@@ -77,12 +77,8 @@ def get_loader(cfg: Config) -> Tuple[DataLoader, DataLoader]:
     )
 
     if cfg.data.subset_size:
-        train_indices = np.random.choice(
-            len(cinic_train), cfg.data.subset_size, replace=False
-        )
-        val_indices = np.random.choice(
-            len(cinic_valid), cfg.data.subset_size, replace=False
-        )
+        train_indices = np.random.choice(len(cinic_train), cfg.data.subset_size, replace=False)
+        val_indices = np.random.choice(len(cinic_valid), cfg.data.subset_size, replace=False)
         cinic_train = Subset(cinic_train, train_indices)
         cinic_valid = Subset(cinic_valid, val_indices)
 
