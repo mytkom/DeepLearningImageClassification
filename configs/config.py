@@ -37,6 +37,7 @@ class CNNArchitectureConfig:
 @dataclasses.dataclass
 class ModelConfig:
     architecture: Literal["CNN", "ViT", "Pretrained"] = "Pretrained"
+    is_prototypical: bool = False
     resume_path: Optional[str] = None
 
 
@@ -63,6 +64,13 @@ class SweepConfig:
     config: str = ""
     project_name: str = ""
 
+@dataclasses.dataclass
+class FewShotConfig:
+    n_way: int = 5 # number of classes
+    n_shot: int = 5 # samples per class in support set
+    n_query: int = 10 # samples per class in query set
+    n_training_episodes: int = 4000
+    n_validation_tasks: int = 100
 
 @dataclasses.dataclass
 class Config(JSONPyWizard):
@@ -73,6 +81,7 @@ class Config(JSONPyWizard):
     model: ModelConfig
     pretrained_model: PretrainedModelConfig
     cnn: CNNArchitectureConfig
+    few_shot: FewShotConfig
 
     # Config for data option
     data: DataConfig
