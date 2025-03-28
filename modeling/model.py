@@ -160,6 +160,7 @@ class ResNetDeep(ConfigurableCNN):
         x = torch.flatten(x, 1)
         return self.fc(x)
 
+
 class VGGlike(ConfigurableCNN):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -241,8 +242,17 @@ class EfficientNetB0Model(PretrainedModel):
         super(EfficientNetB0Model, self).__init__('efficientnet_b0.ra_in1k', num_classes, freeze_pretrained)
 
 
-def build_model(cfg: Config) -> nn.Module:
-    print("config just before model creation: ", cfg)
+class PrototypicalNetworks(nn.Module):
+    def __init__(self, backbone: nn.Module):
+        super(PrototypicalNetworks, self).__init__()
+        self.backbone = backbone
+        self.transforms = backbone.transforms
+
+    def forward(self, x):
+        return self.backbone.forward(x)
+
+
+def build_model_from_config(cfg: Config) -> nn.Module:
     if cfg.model.architecture == "CNN":
         if cfg.cnn.architecture not in CNN_MAP.keys():
             raise RuntimeError(f"Wrong CNN architecture specified: {cfg.cnn.architecture}")
@@ -256,8 +266,17 @@ def build_model(cfg: Config) -> nn.Module:
                 dropout=cfg.cnn.dropout,
             )
     elif cfg.model.architecture == "Pretrained":
-        return PretrainedModel(cfg.pretrained_model.model_name, cfg.data.num_classes, cfg.pretrained_model.freeze_pretrained)
+        return PretrainedModel(cfg.pretrained_model.model_name, cfg.data.num_classes,
+                               cfg.pretrained_model.freeze_pretrained)
     elif cfg.model.architecture == "ViT":
         return ViT3M(cfg.data.in_channels, cfg.data.num_classes)
     else:
         raise RuntimeError(f"Wrong model architecture set: {cfg.model.architecture}")
+
+
+def build_model(cfg: Config) -> nn.Module:
+    print("config just before model creation: ", cfg)
+    if cfg.model.is_prototypical:
+        return PrototypicalNetworks(build_model_from_config(cfg))
+    else:
+        return build_model_from_config(cfg)
