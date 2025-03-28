@@ -39,7 +39,15 @@
         "n_training_episodes": 4000,
         "n_validation_tasks": 100
     },
-    "project_dir": "few-shot-test",
+    "wandb": {
+        "name": "few-shot-run",
+        "tags": ["few-shot sweep"]
+    },
+    "sweep": {
+        "config": "configuration/few-shot-sweep/sweep_config.json",
+        "project_name": "few-shot-sweep"
+    },
+    "project_dir": "few-shot-sweep",
     "log_dir": "logs",
     "project_tracker": [
         "wandb"

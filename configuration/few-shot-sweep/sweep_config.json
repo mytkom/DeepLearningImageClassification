@@ -17,13 +17,22 @@
             }
           }
         },
+        "few_shot": {
+          "parameters": {
+            "n_training_episodes": {
+              "values": [
+                1000,
+                4000
+              ]
+            }
+          }
+        },
         "pretrained_model": {
           "parameters": {
             "model_name": {
               "values": [
                 "deit_tiny_patch16_224.fb_in1k",
                 "efficientnet_b0.ra_in1k",
-                "efficientnet_b3.ra2_in1k",
                 "resnet50.a1_in1k"
               ]
             },
