@@ -1,5 +1,3 @@
-import torch
-import torch.nn as nn
 import timm
 
 from configs import Config
@@ -11,13 +9,13 @@ import torch.nn as nn
 
 class ConfigurableCNN(nn.Module):
     def __init__(
-        self,
-        input_channels,
-        num_classes,
-        base_filters=64,
-        image_size=32,
-        use_bn=False,
-        dropout=0.0,
+            self,
+            input_channels,
+            num_classes,
+            base_filters=64,
+            image_size=32,
+            use_bn=False,
+            dropout=0.0,
     ):
         super().__init__()
         self.input_channels = input_channels
@@ -162,7 +160,6 @@ class ResNetDeep(ConfigurableCNN):
         x = torch.flatten(x, 1)
         return self.fc(x)
 
-
 class VGGlike(ConfigurableCNN):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -208,6 +205,42 @@ def ViT3M(in_channels: int, num_classes: int) -> nn.Module:
     )
 
 
+class PretrainedModel(nn.Module):
+    def __init__(self, model_name: str, num_classes: int, freeze_pretrained: bool = False):
+        super(PretrainedModel, self).__init__()
+        self.model = timm.create_model(model_name, pretrained=True)
+
+        if hasattr(self.model, 'fc'):
+            in_features = self.model.fc.in_features
+            self.model.fc = nn.Linear(in_features, num_classes)
+        elif hasattr(self.model, 'classifier'):
+            in_features = self.model.classifier.in_features
+            self.model.classifier = nn.Linear(in_features, num_classes)
+        else:
+            raise RuntimeError(f"Model {model_name} does not have a known classifier layer")
+
+        if freeze_pretrained:
+            for param in self.model.parameters():
+                param.requires_grad = False
+            if hasattr(self.model, 'fc'):
+                for param in self.model.fc.parameters():
+                    param.requires_grad = True
+            elif hasattr(self.model, 'classifier'):
+                for param in self.model.classifier.parameters():
+                    param.requires_grad = True
+
+        data_config = timm.data.resolve_model_data_config(self.model)
+        self.transforms = timm.data.create_transform(**data_config, is_training=False)
+
+    def forward(self, x):
+        return self.model(x)
+
+
+class EfficientNetB0Model(PretrainedModel):
+    def __init__(self, num_classes: int, freeze_pretrained: bool = False):
+        super(EfficientNetB0Model, self).__init__('efficientnet_b0.ra_in1k', num_classes, freeze_pretrained)
+
+
 def build_model(cfg: Config) -> nn.Module:
     print("config just before model creation: ", cfg)
     if cfg.model.architecture == "CNN":
@@ -222,6 +255,8 @@ def build_model(cfg: Config) -> nn.Module:
                 use_bn=cfg.cnn.batch_normalization,
                 dropout=cfg.cnn.dropout,
             )
+    elif cfg.model.architecture == "Pretrained":
+        return PretrainedModel(cfg.pretrained_model.model_name, cfg.data.num_classes, cfg.pretrained_model.freeze_pretrained)
     elif cfg.model.architecture == "ViT":
         return ViT3M(cfg.data.in_channels, cfg.data.num_classes)
     else:

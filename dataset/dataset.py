@@ -1,5 +1,5 @@
 import os
-from typing import Tuple
+from typing import Tuple, Optional
 
 import numpy as np
 import torchvision
@@ -18,8 +18,18 @@ class CINIC10(Dataset):
     cinic_std = [0.24205776, 0.23828046, 0.25874835]
 
 
-def get_loader(cfg: Config) -> Tuple[DataLoader, DataLoader]:
+def get_loader(cfg: Config, custom_transforms: Optional[v2.Compose] = None) -> Tuple[DataLoader, DataLoader]:
     augmentation = v2.Identity()  # No augmentation
+    
+    if custom_transforms:
+        base_transforms = custom_transforms
+    else:
+        base_transforms = v2.Compose(
+            [
+                v2.ToTensor(),
+                v2.Normalize(mean=CINIC10.cinic_mean, std=CINIC10.cinic_std)
+            ]
+        )
 
     if cfg.data.augmentation == "BasicTransform":
         augmentation = v2.Compose(
@@ -58,22 +68,18 @@ def get_loader(cfg: Config) -> Tuple[DataLoader, DataLoader]:
     train_transform = v2.Compose(
         [
             augmentation,
-            v2.ToTensor(),
-            v2.Normalize(mean=CINIC10.cinic_mean, std=CINIC10.cinic_std),
+            base_transforms
         ]
     )
+
+    val_transform = base_transforms
 
     cinic_train = torchvision.datasets.ImageFolder(
         os.path.join(cfg.data.root, CINIC10.cinic_directory, "train"), transform=train_transform
     )
     cinic_valid = torchvision.datasets.ImageFolder(
         os.path.join(cfg.data.root, CINIC10.cinic_directory, "valid"),
-        transform=v2.Compose(
-            [
-                v2.ToTensor(),
-                v2.Normalize(mean=CINIC10.cinic_mean, std=CINIC10.cinic_std),
-            ]
-        ),
+        transform=val_transform,
     )
 
     if cfg.data.subset_size:

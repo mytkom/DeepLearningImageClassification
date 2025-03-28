@@ -1,0 +1,41 @@
+{
+  "method": "grid",
+  "metric": {
+    "name": "acc/val",
+    "goal": "maximize"
+  },
+  "parameters": {
+    "sweep": {
+      "parameters": {
+        "training": {
+          "parameters": {
+            "lr": {
+              "values": [
+                0.00001,
+                0.000001
+              ]
+            }
+          }
+        },
+        "pretrained_model": {
+          "parameters": {
+            "model_name": {
+              "values": [
+                "efficientnet_b0.ra_in1k",
+                "efficientnet_b3.ra2_in1k",
+                "resnet50.a1_in1k",
+                "mobilenetv3_small_100.lamb_in1k"
+              ]
+            },
+            "freeze_pretrained": {
+              "values": [
+                true,
+                false
+              ]
+            }
+          }
+        }
+      }
+    }
+  }
+}

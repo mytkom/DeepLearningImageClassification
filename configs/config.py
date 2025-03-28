@@ -42,8 +42,14 @@ class CNNArchitectureConfig:
 
 @dataclasses.dataclass
 class ModelConfig:
-    architecture: Literal["CNN", "ViT"] = "CNN"
+    architecture: Literal["CNN", "ViT", "Pretrained"] = "Pretrained"
     resume_path: Optional[str] = None
+
+
+@dataclasses.dataclass
+class PretrainedModelConfig:
+    model_name: str = 'efficientnet_b0.ra_in1k'
+    freeze_pretrained: bool = False
 
 
 @dataclasses.dataclass
@@ -71,6 +77,7 @@ class Config(JSONPyWizard):
 
     # Config for model option
     model: ModelConfig
+    pretrained_model: PretrainedModelConfig
     cnn: CNNArchitectureConfig
 
     # Config for data option

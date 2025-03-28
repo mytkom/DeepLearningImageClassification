@@ -168,7 +168,7 @@ class Engine(BaseEngine):
         )
 
         with self.accelerator.main_process_first():
-            train_loader, val_loader = get_loader(self.cfg)
+            train_loader, val_loader = get_loader(self.cfg, model.transforms)
 
         (
             self.model,
