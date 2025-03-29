@@ -39,10 +39,14 @@ class CNNArchitectureConfig:
     batch_normalization: bool = False
     dropout: float = 0.0
 
+@dataclasses.dataclass
+class EnsembleModelConfig:
+    voting: Literal['soft', 'hard', 'stacking'] = 'soft'
+
 
 @dataclasses.dataclass
 class ModelConfig:
-    architecture: Literal["CNN", "ViT", "Pretrained"] = "Pretrained"
+    architecture: Literal["CNN", "ViT", "Pretrained", "Ensemble"] = "CNN"
     resume_path: Optional[str] = None
 
 
@@ -79,6 +83,7 @@ class Config(JSONPyWizard):
     model: ModelConfig
     pretrained_model: PretrainedModelConfig
     cnn: CNNArchitectureConfig
+    ensemble: EnsembleModelConfig
 
     # Config for data option
     data: DataConfig

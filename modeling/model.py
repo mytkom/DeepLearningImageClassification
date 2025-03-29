@@ -1,10 +1,12 @@
 import timm
 
+from typing import Literal
 from configs import Config
 
 # CNNs
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 
 class ConfigurableCNN(nn.Module):
@@ -192,11 +194,11 @@ CNN_MAP = {"Classic": ClassicCNN, "ResNet": ResNet, "ResNetDeep": ResNetDeep, "V
 
 
 # parameters based on best performing setup from Appendix A of https://arxiv.org/abs/2210.07240
-def ViT3M(in_channels: int, num_classes: int) -> nn.Module:
+def ViT3M(in_channels: int, num_classes: int, image_size: int = 32) -> nn.Module:
     return timm.models.VisionTransformer(
         num_classes=num_classes,
         in_chans=in_channels,
-        img_size=32,
+        img_size=image_size,
         patch_size=4,
         embed_dim=192,
         depth=9,
@@ -240,6 +242,42 @@ class EfficientNetB0Model(PretrainedModel):
     def __init__(self, num_classes: int, freeze_pretrained: bool = False):
         super(EfficientNetB0Model, self).__init__('efficientnet_b0.ra_in1k', num_classes, freeze_pretrained)
 
+class EnsembleModel(nn.Module):
+    def __init__(
+        self, 
+        input_channels: int, 
+        num_classes: int, 
+        image_size:int = 32,
+        voting: Literal['soft', 'hard', 'stacking'] = 'soft'
+    ) -> None:
+        super().__init__()
+        self.voting: Literal['soft', 'hard', 'stacking'] = voting
+        
+        # ResNet3M
+        self.resnet: ResNet = ResNet(
+            input_channels=input_channels, num_classes=num_classes, image_size=image_size, base_filters=48, use_bn=True
+        )
+        self.vit: nn.Module = ViT3M(in_channels=input_channels, num_classes=num_classes, image_size=image_size)
+        
+        if self.voting == 'stacking':
+            self.stacking_fc: nn.Linear = nn.Linear(num_classes * 2, num_classes)
+    
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        resnet_out: torch.Tensor = self.resnet(x)
+        vit_out: torch.Tensor = self.vit(x)
+        
+        if self.voting == 'soft':
+            return (F.softmax(resnet_out, dim=1) + F.softmax(vit_out, dim=1)) / 2
+        elif self.voting == 'hard':
+            resnet_pred: torch.Tensor = torch.argmax(resnet_out, dim=1)
+            vit_pred: torch.Tensor = torch.argmax(vit_out, dim=1)
+            final_pred: torch.Tensor = torch.mode(torch.stack([resnet_pred, vit_pred]), dim=0).values
+            return final_pred
+        elif self.voting == 'stacking':
+            combined_features: torch.Tensor = torch.cat([resnet_out, vit_out], dim=1)
+            return self.stacking_fc(combined_features)
+        else:
+            raise ValueError("Invalid voting method. Choose 'soft', 'hard', or 'stacking'.")
 
 def build_model(cfg: Config) -> nn.Module:
     print("config just before model creation: ", cfg)
@@ -258,6 +296,8 @@ def build_model(cfg: Config) -> nn.Module:
     elif cfg.model.architecture == "Pretrained":
         return PretrainedModel(cfg.pretrained_model.model_name, cfg.data.num_classes, cfg.pretrained_model.freeze_pretrained)
     elif cfg.model.architecture == "ViT":
-        return ViT3M(cfg.data.in_channels, cfg.data.num_classes)
+        return ViT3M(cfg.data.in_channels, cfg.data.num_classes, cfg.data.image_size)
+    elif cfg.model.architecture == "Ensemble":
+        return EnsembleModel(cfg.data.in_channels, cfg.data.num_classes, cfg.data.image_size, cfg.ensemble.voting)
     else:
         raise RuntimeError(f"Wrong model architecture set: {cfg.model.architecture}")

@@ -1,0 +1,38 @@
+{
+    "training": {
+        "engine": "engine",
+        "label_smoothing": 0.0,
+        "batch_size": 128,
+        "val_freq": 1,
+        "epochs": 100,
+        "num_workers": 4,
+        "accum_iter": 1,
+        "mixed_precision": "no",
+        "lr": 0.001,
+        "weight_decay": 0.001
+    },
+    "model": {
+        "architecture": "Ensemble"
+    },
+    "wandb": {
+        "name": "Ensemble (ViT3M + ResNet3M)",
+        "tags": ["Ensemble voting comparison"]
+    },
+    "data": {
+        "root": "data",
+        "augmentation": "BasicTransform",
+        "mix_augmentations": true
+    },
+    "evaluation": {
+        "num_workers": 4,
+        "batch_size": 32
+    },
+    "log_dir": "logs",
+    "project_dir": "final_experiments",
+    "project_tracker": [
+        "wandb"
+    ],
+    "mixed_precision": "no",
+    "seed": 42,
+    "config": null
+}
