@@ -17,12 +17,13 @@
             }
           }
         },
-        "few_shot": {
+        "data": {
           "parameters": {
-            "n_training_episodes": {
+            "subset_size": {
               "values": [
-                1000,
-                4000
+                100,
+                5000,
+                10000
               ]
             }
           }
