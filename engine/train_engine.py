@@ -168,7 +168,10 @@ class Engine(BaseEngine):
         )
 
         with self.accelerator.main_process_first():
-            train_loader, val_loader = get_loader(self.cfg, model.transforms)
+            if hasattr(model, 'transforms'):
+                train_loader, val_loader = get_loader(self.cfg, model.transforms)
+            else:
+                train_loader, val_loader = get_loader(self.cfg)
 
         (
             self.model,
