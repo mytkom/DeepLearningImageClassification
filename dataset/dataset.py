@@ -17,6 +17,12 @@ class CINIC10(Dataset):
     cinic_mean = [0.47889522, 0.47227842, 0.43047404]
     cinic_std = [0.24205776, 0.23828046, 0.25874835]
 
+def custom_collate(batch):
+    cutmix = v2.CutMix(num_classes=10)
+    mixup = v2.MixUp(num_classes=10)
+    cutmix_or_mixup = v2.RandomChoice([cutmix, mixup])
+    return cutmix_or_mixup(*default_collate(batch))
+
 
 def get_loader(cfg: Config, custom_transforms: Optional[v2.Compose] = None) -> Tuple[DataLoader, DataLoader]:
     augmentation = v2.Identity()  # No augmentation
@@ -60,10 +66,7 @@ def get_loader(cfg: Config, custom_transforms: Optional[v2.Compose] = None) -> T
 
     collate = default_collate
     if cfg.data.mix_augmentations:
-        cutmix = v2.CutMix(num_classes=cfg.data.num_classes)
-        mixup = v2.MixUp(num_classes=cfg.data.num_classes)
-        cutmix_or_mixup = v2.RandomChoice([cutmix, mixup])
-        collate = lambda batch: cutmix_or_mixup(*default_collate(batch))
+        collate = custom_collate
 
     train_transform = v2.Compose(
         [
