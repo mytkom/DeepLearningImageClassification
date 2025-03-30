@@ -7,27 +7,6 @@
   "parameters": {
     "sweep": {
       "parameters": {
-        "training": {
-          "parameters": {
-            "lr": {
-              "values": [
-                0.001,
-                0.0001
-              ]
-            }
-          }
-        },
-        "data": {
-          "parameters": {
-            "subset_size": {
-              "values": [
-                100,
-                5000,
-                10000
-              ]
-            }
-          }
-        },
         "pretrained_model": {
           "parameters": {
             "model_name": {
